@@ -53,13 +53,13 @@
   .settings-panel.open{display:block;}
   .settings-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .settings-bar input[type="text"]{flex:1;min-width:220px;background:var(--bg);border:1px solid var(--border-strong);color:var(--ink);font-family:var(--font-mono);font-size:11.5px;padding:8px 10px;border-radius:7px;}
-  .settings-note{width:100%;font-size:11px;color:var(--ink-muted);margin-top:2px;}
+  .settings-note{width:100%;font-size:11.5px;color:var(--ink-sec);margin-top:2px;}
 
   /* ---- Nav rail — segmented pill control, signature element ---- */
   .navrail-wrap{max-width:1200px;margin:0 auto;padding:0 20px 12px;}
   .navrail-scroll{overflow-x:auto;}
   .nav-rail{background:var(--bg-warm);border:1px solid var(--border);border-radius:999px;padding:4px;display:inline-flex;align-items:center;gap:1px;position:relative;width:max-content;}
-  .nav-pill{position:relative;z-index:1;font-size:12px;font-weight:600;letter-spacing:.01em;color:var(--ink-muted);padding:8px 15px;border-radius:999px;white-space:nowrap;background:transparent;border:none;cursor:pointer;transition:color .25s;font-family:var(--font-body);}
+  .nav-pill{position:relative;z-index:1;font-size:12.5px;font-weight:600;letter-spacing:.01em;color:var(--ink-sec);padding:8px 15px;border-radius:999px;white-space:nowrap;background:transparent;border:none;cursor:pointer;transition:color .25s;font-family:var(--font-body);}
   .nav-pill.active{color:var(--espresso-light);}
   .nav-pill:not(.active):hover{color:var(--espresso);}
   .nav-pill-indicator{position:absolute;top:4px;bottom:4px;left:4px;width:0;border-radius:999px;background:var(--espresso);box-shadow:0 4px 12px -4px rgba(92,65,48,.5);transition:left .35s cubic-bezier(.65,0,.35,1), width .35s cubic-bezier(.65,0,.35,1);z-index:0;}
@@ -80,7 +80,7 @@
   .section-num{font-family:var(--font-mono);font-size:11.5px;color:var(--espresso);}
   h2{font-family:var(--font-display);font-size:18px;font-weight:600;margin:0;color:var(--espresso-dark);}
   h3{font-family:var(--font-display);font-size:14.5px;font-weight:600;margin:0 0 12px;color:var(--ink);}
-  .section-sub{color:var(--ink-muted);font-size:12.5px;margin:0 0 16px;}
+  .section-sub{color:var(--ink-sec);font-size:13px;margin:0 0 16px;}
 
   /* ---- Progress ---- */
   .progress-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:22px;}
@@ -97,10 +97,10 @@
   .platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;}
   .platform-card{background:var(--card);padding:15px 16px;}
   .platform-card .pname{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:8px;}
-  .platform-card .prow{font-size:12px;color:var(--ink-sec);margin-bottom:5px;}
+  .platform-card .prow{font-size:12.5px;color:var(--ink-sec);margin-bottom:5px;}
   .platform-card .prow b{color:var(--ink);font-weight:600;}
   .platform-card .ptag{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--border);padding:1px 6px;border-radius:4px;margin-top:6px;}
-  details.caveat{margin-top:4px;font-size:12.5px;color:var(--ink-muted);}
+  details.caveat{margin-top:4px;font-size:13px;color:var(--ink-sec);}
   details.caveat summary{cursor:pointer;font-family:var(--font-mono);color:var(--ink-sec);font-size:11px;letter-spacing:0.04em;}
   details.caveat p{margin:8px 0 0;}
 
@@ -149,17 +149,17 @@
   #checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
   .item{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--brick);border-radius:8px;padding:12px 14px;}
   .item.done{border-left-color:var(--moss);}
-  .item.done .item-text{color:var(--ink-muted);text-decoration:line-through;}
+  .item.done .item-text{color:var(--ink-sec);text-decoration:line-through;}
   .item-check{appearance:none;-webkit-appearance:none;width:19px;height:19px;border:1.5px solid var(--border-strong);border-radius:5px;background:var(--bg-input);cursor:pointer;margin-top:1px;flex-shrink:0;position:relative;}
   .item-check:checked{background:var(--moss);border-color:var(--moss);}
   .item-check:checked::after{content:"✓";position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);color:#fff;font-size:13px;font-weight:700;}
   .item-body{flex:1;min-width:0;}
-  .item-text{font-size:14px;color:var(--ink);word-break:break-word;}
+  .item-text{font-size:14.5px;color:var(--ink);word-break:break-word;}
   .item-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;}
   .item-tag{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);background:var(--bg-input);border:1px solid var(--border);padding:2px 7px;border-radius:4px;}
   .item-del{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0;}
   .item-del:hover{color:var(--brick);}
-  .empty-state{text-align:center;padding:28px 20px;color:var(--ink-muted);font-size:12.5px;border:1px dashed var(--border-strong);border-radius:10px;}
+  .empty-state{text-align:center;padding:28px 20px;color:var(--ink-sec);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px;}
 
   /* ---- KPI ---- */
   #kpiForm{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;align-items:end;}
@@ -173,17 +173,20 @@
   .cal-picker input[type="date"]{background:var(--bg-input);border:1px solid var(--border-strong);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:9px 11px;border-radius:7px;}
   .cal-picker input:focus{outline:2px solid var(--espresso);outline-offset:1px;}
   .cal-daylabel{font-family:var(--font-display);font-size:16px;font-weight:600;}
-  .cal-empty{padding:24px;text-align:center;color:var(--ink-muted);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px;}
+  .cal-empty{padding:24px;text-align:center;color:var(--ink-sec);font-size:13.5px;border:1px dashed var(--border-strong);border-radius:10px;}
 
   .cal-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
   .cal-card-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
   .cal-card-name{font-family:var(--font-display);font-size:15px;font-weight:600;}
   .cal-card-group{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);}
   .cal-reco-row{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;}
-  .cal-reco-item{font-size:12.5px;color:var(--ink-sec);}
+  .cal-reco-item{font-size:13px;color:var(--ink-sec);}
   .cal-reco-item b{color:var(--ink);display:block;font-size:13.5px;margin-top:2px;}
-  .cal-basis{font-size:11px;color:var(--ink-muted);margin-bottom:10px;padding-top:8px;border-top:1px dashed var(--border);}
+  .cal-basis{font-size:12px;color:var(--ink-sec);margin-bottom:10px;padding-top:8px;border-top:1px dashed var(--border);}
   .cal-basis b{color:var(--ink-sec);font-weight:600;}
+  .cal-daymatch{font-size:11.5px;padding:7px 10px;border-radius:7px;margin-bottom:10px;line-height:1.5;}
+  .cal-daymatch-ok{background:#EDF1E7;color:var(--moss);}
+  .cal-daymatch-warn{background:#FBF1DD;color:#8A6420;}
 
   /* ---- Laporan Analisa ---- */
   .report-block{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
@@ -209,7 +212,7 @@
   .research-finding-type{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);margin-right:8px;}
   .research-meta{font-size:11.5px;color:var(--ink-sec);margin-top:4px;}
   .research-meta a{color:var(--fjord);text-decoration:underline;}
-  .research-notes{font-size:11px;color:var(--ink-muted);margin-top:2px;font-style:italic;}
+  .research-notes{font-size:11.5px;color:var(--ink-sec);margin-top:2px;font-style:italic;}
   .research-date{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);white-space:nowrap;}
   @media (max-width:700px){.report-tables{grid-template-columns:1fr;}}
   .live-tag{display:inline-block;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;background:var(--moss);color:#fff;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
@@ -486,7 +489,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], instagramBaselineLive: null };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -538,8 +541,16 @@
     state.kpi = data.kpi || [];
     state.baseline = data.baseline || [];
     state.researchLog = data.researchLog || [];
-    // null = tab CompetitorData belum diimpor; {error:...} = ada masalah baca -- dua-duanya berarti "nggak ada data real", jatuh balik ke Baseline biasa
-    state.instagramBaselineLive = (data.instagramBaselineLive && !data.instagramBaselineLive.error) ? data.instagramBaselineLive : null;
+    // null = tab CompetitorData belum diimpor sama sekali; {error:...} = sheet
+    // ketemu tapi ada masalah (nama kolom dll) -- pesannya DITAMPILKAN, bukan
+    // dibuang, biar ketauan sebabnya persis apa (bukan black box).
+    if(data.instagramBaselineLive && data.instagramBaselineLive.error){
+      state.instagramBaselineLive = null;
+      state.instagramBaselineLiveError = data.instagramBaselineLive.error;
+    } else {
+      state.instagramBaselineLive = data.instagramBaselineLive || null;
+      state.instagramBaselineLiveError = null;
+    }
   }
 
   async function connectAndLoad(){
@@ -715,7 +726,7 @@
   function renderScheduleTable(){
     var table = document.getElementById("scheduleTable");
     if(state.destinations.length === 0){
-      table.innerHTML = '<tr><td style="padding:20px;color:var(--ink-muted);">Belum ada destinasi. Tambahkan di tab "Kelola Label & Akun".</td></tr>';
+      table.innerHTML = '<tr><td style="padding:20px;color:var(--ink-sec);">Belum ada destinasi. Tambahkan di tab "Kelola Label & Akun".</td></tr>';
       return;
     }
     var html = "<thead><tr><th>Destinasi</th>";
@@ -795,11 +806,23 @@
       var basisRow = reco.basisLabel
         ? '<div class="cal-basis">Berdasarkan: <b>' + reco.basisLabel + '</b></div>' : '';
 
+      // Bandingkan EKSPLISIT: hari kalender ini vs hari yang direkomendasikan
+      // analisa -- ini yang bikin kelihatan jelas kalau jadwal rotasi (Kelola)
+      // dan rekomendasi (Panduan/Laporan) nyambung atau nggak, bukan disembunyikan.
+      var dayMatchRow = "";
+      if(reco.days && reco.days.length){
+        var isGoodDay = reco.days.indexOf(dayName) !== -1;
+        dayMatchRow = isGoodDay
+          ? '<div class="cal-daymatch cal-daymatch-ok">✓ ' + dayName + ' termasuk hari terbaik (' + reco.days.join(", ") + ')</div>'
+          : '<div class="cal-daymatch cal-daymatch-warn">⚠ ' + dayName + ' BUKAN salah satu hari terbaik menurut data — hari terbaik: ' + reco.days.join(", ") + '. Jadwal destinasi ini bisa diatur ulang di tab Kelola.</div>';
+      }
+
       card.innerHTML =
         '<div class="cal-card-head">' +
           '<div><div class="cal-card-name">' + dest.name + '</div><div class="cal-card-group">' + dest.group + '</div></div>' +
           '<span class="label-chip"><span class="label-dot" style="background:' + (label ? label.color : "#9a9a9a") + '"></span>' + (label ? label.name : "?") + '</span>' +
         '</div>' +
+        dayMatchRow +
         '<div class="cal-reco-row">' +
           '<div class="cal-reco-item">Format disarankan' + sourceTag + '<b>' + (reco.format || "—") + '</b></div>' +
           '<div class="cal-reco-item">Jam disarankan<b>' + (reco.time || "—") + '</b></div>' +
@@ -898,6 +921,16 @@
   // platform yang benar-benar kita scrape datanya).
   var MIN_SAMPLE_FOR_SLICE = 15; // ambang minimal sampel sebelum percaya rata-rata 1 irisan (kombo/cluster/segmen/area)
 
+  // Ambil jam terbaik (rata-rata engagement tertinggi) dari data asli, format
+  // jadi rentang 2 jam yang gampang dibaca (mis. jam terbaik 16 -> "16:00-18:00").
+  function formatHourRange(byHour){
+    if(!byHour || !byHour.length) return "";
+    var h = parseInt(byHour[0].key, 10);
+    if(isNaN(h)) return "";
+    function pad(n){ return (n < 10 ? "0" : "") + n; }
+    return pad(h) + ":00-" + pad((h + 2) % 24) + ":00";
+  }
+
   function pickFromAgg(agg){
     if(!agg || !agg.byContentType || !agg.byContentType.length) return null;
     var bestType = agg.byContentType[0];
@@ -905,6 +938,7 @@
     return {
       days: topDays,
       format: bestType.key + " (" + bestType.avg.toFixed(2) + "% eng.)",
+      time: formatHourRange(agg.byHour),
       sampleSize: agg.sampleSize
     };
   }
@@ -991,12 +1025,14 @@
     if(live){
       return {
         days: [live.day], format: competitorReco ? competitorReco.format.split(" (")[0] : (base ? base.best_format : ""),
-        time: base ? base.best_time : "", source: "live", sampleSize: live.sampleSize, baseSource: "", basisLabel: ""
+        time: (competitorReco && competitorReco.time) ? competitorReco.time : (base ? base.best_time : ""),
+        source: "live", sampleSize: live.sampleSize, baseSource: "", basisLabel: ""
       };
     }
     if(competitorReco){
       return {
-        days: competitorReco.days, format: competitorReco.format, time: base ? base.best_time : "",
+        days: competitorReco.days, format: competitorReco.format,
+        time: competitorReco.time || (base ? base.best_time : ""),
         source: "competitor", sampleSize: competitorReco.sampleSize, baseSource: "575 akun kompetitor, 90 hari",
         basisLabel: competitorReco.basisLabel
       };
@@ -1138,8 +1174,15 @@
     var sel = document.getElementById("laporanSliceSelect");
     var opts = buildSliceOptions();
     if(opts.length === 0){
-      sel.innerHTML = '<option value="">Belum ada data (import CompetitorData dulu)</option>';
-      document.getElementById("laporanSliceContent").innerHTML = "";
+      if(state.instagramBaselineLiveError){
+        sel.innerHTML = '<option value="">Ada masalah baca CompetitorData</option>';
+        document.getElementById("laporanSliceContent").innerHTML =
+          '<div class="cal-empty" style="text-align:left;border-color:var(--brick);color:var(--brick);">' +
+          '<b>Gagal baca sheet CompetitorData:</b><br>' + state.instagramBaselineLiveError + '</div>';
+      } else {
+        sel.innerHTML = '<option value="">Belum ada data (import CompetitorData dulu)</option>';
+        document.getElementById("laporanSliceContent").innerHTML = "";
+      }
       return;
     }
     var lastGroup = null;
@@ -1397,7 +1440,7 @@
       .sort(function(a,b){ return String(b.timestamp).localeCompare(String(a.timestamp)); });
 
     if(rows.length === 0){
-      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--ink-muted);text-align:center;padding:18px;">Belum ada data KPI.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--ink-sec);text-align:center;padding:18px;">Belum ada data KPI.</td></tr>';
       return;
     }
     rows.forEach(function(k){
