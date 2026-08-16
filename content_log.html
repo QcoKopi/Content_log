@@ -238,6 +238,7 @@
   .cal-add-toggle{background:transparent;border:1px solid var(--espresso);color:var(--espresso-dark);font-family:var(--font-mono);font-size:11.5px;padding:7px 14px;border-radius:7px;cursor:pointer;}
   .cal-add-toggle:hover{background:var(--espresso);color:var(--espresso);}
   .cal-add-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .cal-stock-picker{width:100%;margin-bottom:8px;font-size:12px;padding:7px 9px;border-radius:7px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--ink);}
   .cal-add-form.open{display:block;}
   .cal-add-form input[type="text"],.cal-add-form input[type="time"],.cal-add-form select{
     width:100%;background:var(--bg-input);border:1px solid var(--border-strong);color:var(--ink);
@@ -324,9 +325,14 @@
       <div class="section-head"><span class="section-num">02</span><h2>Checklist Konten</h2></div>
       <p class="section-sub">Lacak status konten per destinasi, dari ide sampai tayang. Form di bawah buat tambah cepat tanpa rekomendasi — kalau mau dipandu label/format/jam sesuai jadwal &amp; analisa, pakai tab <b>Kalender</b> (lebih disarankan, biar nggak salah pilih kombinasi).</p>
       <form id="addForm">
+        <select id="itemStockPicker" style="max-width:220px;"><option value="">— Pilih dari Stock (opsional) —</option></select>
         <input type="text" id="itemText" placeholder="Nama/ide konten…" autocomplete="off" required>
         <select id="itemDest"></select>
         <select id="itemLabel"></select>
+        <select id="itemFormat">
+          <option value="">Format (opsional)</option>
+          <option>Carousel</option><option>Reel</option><option>Image</option><option>Video</option><option>Listing produk</option><option>Foto/Video</option>
+        </select>
         <button type="submit" class="btn">Tambah</button>
       </form>
       <div class="filter-tabs" id="filterTabs">
@@ -464,12 +470,34 @@
         </div>
       </div>
     </section>
+
+    <section>
+      <div class="section-head"><span class="section-num">08</span><h2>Stock Konten</h2></div>
+      <p class="section-sub">Daftar aset yang sudah jadi (link ke file asli), ditandai tipe &amp; label. ID otomatis dibentuk dari tipe+label+nomor urut (mis. <code>CAR-EDUK-003</code>) — jadi begitu lihat ID-nya aja udah ketahuan itu apa. Begitu ada di sini, item ini bisa dipilih langsung waktu nambah checklist — nggak perlu ketik ulang, formatnya ikut keisi otomatis.</p>
+      <div class="manager-block">
+        <table class="data-table" id="stockTable"><thead><tr><th>ID</th><th>Nama Konten</th><th>Tipe</th><th>Label</th><th>Link</th><th></th></tr></thead><tbody></tbody></table>
+        <h3>Tambah Stock</h3>
+        <div class="inline-form">
+          <div class="field"><label>Nama Konten</label><input type="text" id="newStockName" placeholder="mis. 5 Cara Seduh V60"></div>
+          <div class="field"><label>Tipe</label>
+            <select id="newStockType">
+              <option>Carousel</option><option>Reel</option><option>Image</option><option>Video</option><option>Listing produk</option><option>Foto/Video</option>
+            </select>
+          </div>
+          <div class="field"><label>Label</label><select id="newStockLabel"></select></div>
+        </div>
+        <div class="inline-form" style="margin-top:8px;">
+          <div class="field" style="flex:2;"><label>Link Stock</label><input type="text" id="newStockLink" placeholder="link Drive/Canva/dst ke file aslinya"></div>
+          <div class="field"><button class="btn" id="addStockBtn">Tambah Stock</button></div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- ===== TAB: KPI ===== -->
   <div class="tab-panel" data-panel="kpi">
     <section>
-      <div class="section-head"><span class="section-num">08</span><h2>KPI per Akun</h2></div>
+      <div class="section-head"><span class="section-num">09</span><h2>KPI per Akun</h2></div>
       <p class="section-sub">Dicatat manual dulu — follower baru, DM, komentar, atau metrik lain per konten/periode. Nanti kalau ada cara integrasi otomatis per platform, form ini tinggal diganti sumbernya, strukturnya tetap sama.</p>
       <div class="manager-block">
         <form id="kpiForm">
@@ -511,7 +539,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -564,6 +592,7 @@
     state.baseline = data.baseline || [];
     state.researchLog = data.researchLog || [];
     state.comboLock = data.comboLock || [];
+    state.stock = data.stock || [];
     // null = tab CompetitorData belum diimpor sama sekali; {error:...} = sheet
     // ketemu tapi ada masalah (nama kolom dll) -- pesannya DITAMPILKAN, bukan
     // dibuang, biar ketauan sebabnya persis apa (bukan black box).
@@ -727,6 +756,89 @@
     }catch(err){ alert("Gagal tambah destinasi: " + err.message); }
   });
 
+  /* ---------- Stock Konten -- aset siap pakai, ID otomatis TIPE-LABEL-URUT ---------- */
+
+  var STOCK_TYPE_CODES = { "Carousel":"CAR", "Reel":"REEL", "Image":"IMG", "Video":"VID", "Listing produk":"LIST", "Foto/Video":"FV" };
+
+  function stockLabelCode_(labelId){
+    var label = state.labels.filter(function(l){ return l.id === labelId; })[0];
+    if(!label || !label.name) return "NOLBL";
+    var letters = label.name.replace(/[^a-zA-Z]/g, "").toUpperCase();
+    return letters.slice(0, 4) || "LBL";
+  }
+
+  // ID = TIPE-LABEL-URUT, urutnya per kombinasi tipe+label (bukan global) --
+  // jadi "CAR-EDUK-003" beneran berarti "carousel edukasi yang ke-3", bukan
+  // sekadar nomor urut acak. Dibuat di CLIENT (bukan server) karena butuh liat
+  // seluruh state.stock buat nentuin nomor urut berikutnya.
+  function generateStockId(type, labelId){
+    var typeCode = STOCK_TYPE_CODES[type] || type.replace(/[^a-zA-Z]/g,"").slice(0,3).toUpperCase() || "TYP";
+    var labelCode = stockLabelCode_(labelId);
+    var prefix = typeCode + "-" + labelCode + "-";
+    var maxSeq = 0;
+    state.stock.forEach(function(s){
+      if(!s.id || s.id.indexOf(prefix) !== 0) return;
+      var n = parseInt(s.id.slice(prefix.length), 10);
+      if(!isNaN(n) && n > maxSeq) maxSeq = n;
+    });
+    var seqStr = String(maxSeq + 1);
+    while(seqStr.length < 3) seqStr = "0" + seqStr;
+    return prefix + seqStr;
+  }
+
+  function populateStockLabelSelect(){
+    var sel = document.getElementById("newStockLabel");
+    if(!sel) return;
+    var current = sel.value;
+    sel.innerHTML = state.labels.map(function(l){ return '<option value="' + l.id + '">' + l.name + '</option>'; }).join("");
+    if(state.labels.some(function(l){ return l.id === current; })) sel.value = current;
+  }
+
+  function renderStockTable(){
+    var tbody = document.querySelector("#stockTable tbody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
+    state.stock.forEach(function(s){
+      var label = state.labels.filter(function(l){ return l.id === s.label_id; })[0];
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td style="font-family:var(--font-mono);font-size:11px;">' + s.id + '</td>' +
+        '<td>' + s.nama_konten + '</td>' +
+        '<td>' + s.type + '</td>' +
+        '<td><span class="label-chip"><span class="label-dot" style="background:' + (label ? label.color : "#9a9a9a") + '"></span>' + (label ? label.name : "?") + '</span></td>' +
+        '<td>' + (s.link ? '<a href="' + s.link + '" target="_blank" rel="noopener">Buka</a>' : '<span style="color:var(--ink-muted);">—</span>') + '</td>' +
+        '<td class="row-actions"></td>';
+      var del = document.createElement("button");
+      del.className = "icon-btn danger"; del.textContent = "Hapus";
+      del.addEventListener("click", async function(){
+        if(!confirm('Hapus stock "' + s.nama_konten + '" (' + s.id + ')?')) return;
+        try{ await apiWrite("stock", "delete", { id: s.id }); state.stock = state.stock.filter(function(x){ return x.id !== s.id; }); renderStockTable(); populateStockPickers(); }
+        catch(err){ alert("Gagal hapus: " + err.message); }
+      });
+      tr.querySelector(".row-actions").appendChild(del);
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("addStockBtn").addEventListener("click", async function(){
+    var name = document.getElementById("newStockName").value.trim();
+    var type = document.getElementById("newStockType").value;
+    var labelId = document.getElementById("newStockLabel").value;
+    var link = document.getElementById("newStockLink").value.trim();
+    if(!name){ alert("Isi nama konten dulu."); return; }
+    if(!labelId){ alert("Pilih label dulu (tambah label di section Label Konten kalau belum ada)."); return; }
+    var id = generateStockId(type, labelId);
+    var row = { id: id, nama_konten: name, type: type, label_id: labelId, link: link, created_at: new Date().toISOString() };
+    try{
+      await apiWrite("stock", "add", { row: row });
+      state.stock.push(row);
+      document.getElementById("newStockName").value = "";
+      document.getElementById("newStockLink").value = "";
+      renderStockTable();
+      populateStockPickers();
+    }catch(err){ alert("Gagal tambah stock: " + err.message); }
+  });
+
   /* ---------- Schedule (computed, data-driven) ---------- */
 
   function computeDestSchedule(dest){
@@ -853,6 +965,7 @@
         basisRow +
         '<button class="cal-add-toggle">+ Tambah ke Checklist</button>' +
         '<div class="cal-add-form">' +
+          '<select class="cal-stock-picker">' + buildCalStockOptions_(label) + '</select>' +
           '<div class="cal-add-grid">' +
             '<input type="text" class="cal-text" placeholder="Ide/nama konten…">' +
             '<select class="cal-format">' +
@@ -872,6 +985,15 @@
         if(form.classList.contains("open")) card.querySelector(".cal-text").focus();
       });
 
+      card.querySelector(".cal-stock-picker").addEventListener("change", function(){
+        var stockId = this.value;
+        if(!stockId) return;
+        var s = state.stock.filter(function(x){ return x.id === stockId; })[0];
+        if(!s) return;
+        card.querySelector(".cal-text").value = s.nama_konten;
+        card.querySelector(".cal-format").value = s.type;
+      });
+
       card.querySelector(".cal-save").addEventListener("click", async function(){
         var text = card.querySelector(".cal-text").value.trim();
         if(!text){ alert("Isi ide/nama konten dulu."); return; }
@@ -880,6 +1002,7 @@
           dest_id: dest.id,
           label_id: label ? label.id : "",
           format: card.querySelector(".cal-format").value,
+          stock_id: card.querySelector(".cal-stock-picker").value || "",
           post_date: dateStr,
           post_time: card.querySelector(".cal-time").value,
           done: false,
@@ -891,6 +1014,7 @@
           row.id = res.id;
           state.checklist.unshift(row);
           card.querySelector(".cal-text").value = "";
+          card.querySelector(".cal-stock-picker").value = "";
           form.classList.remove("open");
           renderChecklist();
           alert('Tersimpan ke Checklist untuk ' + dest.name + ', ' + dateStr + '.');
@@ -907,6 +1031,20 @@
     if(!timeRange) return "";
     var m = String(timeRange).match(/(\d{1,2}):(\d{2})/);
     return m ? (m[1].padStart(2,"0") + ":" + m[2]) : "";
+  }
+
+  // Opsi dropdown stock buat 1 kartu Kalender -- diprioritaskan yang label-nya
+  // COCOK sama label terjadwal hari itu (biar relevan), jatuh balik nampilin
+  // SEMUA stock kalau nggak ada yang cocok label (drpd dropdown kosong).
+  function buildCalStockOptions_(label){
+    var matching = label ? state.stock.filter(function(s){ return s.label_id === label.id; }) : [];
+    var pool = matching.length ? matching : state.stock;
+    if(pool.length === 0) return '<option value="">— Belum ada stock —</option>';
+    var html = '<option value="">— Pilih dari Stock (opsional) —</option>';
+    pool.forEach(function(s){
+      html += '<option value="' + s.id + '">[' + s.id + '] ' + s.nama_konten + ' (' + s.type + ')</option>';
+    });
+    return html;
   }
 
   document.getElementById("calDate").addEventListener("change", function(){
@@ -929,6 +1067,36 @@
       labelSel.appendChild(o);
     });
   }
+
+  // Isi dropdown "Pilih dari Stock" di form manual, dikelompokkan per label
+  // biar gampang nyari. Dipanggil tiap data reload (stock/label bisa berubah).
+  function populateStockPickers(){
+    var sel = document.getElementById("itemStockPicker");
+    if(!sel) return;
+    var current = sel.value;
+    var html = '<option value="">— Pilih dari Stock (opsional) —</option>';
+    state.labels.forEach(function(l){
+      var items = state.stock.filter(function(s){ return s.label_id === l.id; });
+      if(items.length === 0) return;
+      html += '<optgroup label="' + l.name + '">';
+      items.forEach(function(s){
+        html += '<option value="' + s.id + '">[' + s.id + '] ' + s.nama_konten + ' (' + s.type + ')</option>';
+      });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
+    if(state.stock.some(function(s){ return s.id === current; })) sel.value = current;
+  }
+
+  document.getElementById("itemStockPicker").addEventListener("change", function(){
+    var stockId = this.value;
+    if(!stockId) return;
+    var s = state.stock.filter(function(x){ return x.id === stockId; })[0];
+    if(!s) return;
+    document.getElementById("itemText").value = s.nama_konten;
+    document.getElementById("itemFormat").value = s.type;
+    if(s.label_id) document.getElementById("itemLabel").value = s.label_id;
+  });
 
   function destName(id){ var d = state.destinations.filter(function(x){return x.id===id;})[0]; return d ? d.name : id; }
   function labelName(id){ var l = labelById(id); return l ? l.name : id; }
@@ -1698,10 +1866,13 @@
     var textInput = document.getElementById("itemText");
     var text = textInput.value.trim();
     if(!text) return;
+    var stockPicker = document.getElementById("itemStockPicker");
     var row = {
       text: text,
       dest_id: document.getElementById("itemDest").value,
       label_id: document.getElementById("itemLabel").value,
+      format: document.getElementById("itemFormat").value,
+      stock_id: stockPicker.value || "",
       done: false,
       created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" }),
       created_at: new Date().toISOString()
@@ -1711,6 +1882,8 @@
       row.id = res.id;
       state.checklist.unshift(row);
       textInput.value = "";
+      stockPicker.value = "";
+      document.getElementById("itemFormat").value = "";
       renderChecklist();
     }catch(err){ alert("Gagal tambah: " + err.message); }
   });
@@ -1842,6 +2015,9 @@
     renderDestTable();
     renderScheduleTable();
     populateChecklistSelectors();
+    populateStockLabelSelect();
+    renderStockTable();
+    populateStockPickers();
     renderChecklist();
     populateKpiSelectors();
     renderKpiTable();
