@@ -194,6 +194,10 @@
   .sample-badge{font-family:var(--font-mono);font-size:11.5px;padding:5px 12px;border-radius:20px;background:var(--bg-warm);color:var(--ink-sec);border:1px solid var(--border-strong);}
   .sample-badge.low{background:#F5E4E1;color:var(--brick);border-color:var(--brick);}
   .sig-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;background:#EDF1E7;color:var(--moss);padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .used-tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;white-space:nowrap;margin-bottom:4px;}
+  .used-tag-done{background:#EDF1E7;color:var(--moss);}
+  .used-tag-active{background:#FBF1DD;color:#8A6420;}
+  .used-tag-new{background:var(--bg-warm);color:var(--ink-muted);}
   table.matrix-table{width:100%;border-collapse:collapse;font-size:12.5px;}
   table.matrix-table th{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border-strong);}
   table.matrix-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
@@ -507,7 +511,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -559,6 +563,7 @@
     state.kpi = data.kpi || [];
     state.baseline = data.baseline || [];
     state.researchLog = data.researchLog || [];
+    state.comboLock = data.comboLock || [];
     // null = tab CompetitorData belum diimpor sama sekali; {error:...} = sheet
     // ketemu tapi ada masalah (nama kolom dll) -- pesannya DITAMPILKAN, bukan
     // dibuang, biar ketauan sebabnya persis apa (bukan black box).
@@ -810,7 +815,7 @@
     scheduled.forEach(function(dest){
       var sched = computeDestSchedule(dest);
       var label = labelById(sched[dayName]);
-      var reco = getRecommendation(dest);
+      var reco = getRecommendation(dest, dateStr);
 
       var card = document.createElement("div");
       card.className = "cal-card";
@@ -878,7 +883,8 @@
           post_date: dateStr,
           post_time: card.querySelector(".cal-time").value,
           done: false,
-          created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" })
+          created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" }),
+          created_at: new Date().toISOString()
         };
         try{
           var res = await apiWrite("checklist", "add", { row: row });
@@ -949,23 +955,62 @@
     return pad(h) + ":00-" + pad((h + 2) % 24) + ":00";
   }
 
-  function pickFromAgg(agg){
+  // Cascade dari paling SPESIFIK ke paling UMUM -- tiap tingkat butuh minimal
+  // MIN_SAMPLE_FOR_SLICE data poin sebelum dipercaya, biar nggak nyimpulkan
+  // dari irisan yang kekecilan (mis. cuma 3 akun). basisLabel selalu diisi
+  // biar user tau PERSIS irisan data mana yang lagi dipakai.
+  // Pilih format berikutnya berdasarkan proporsi PEMAKAIAN nyata di data (bukan
+  // cuma format dengan engagement tertinggi), sambil ngejar target proporsi itu
+  // relatif ke format apa aja yang UDAH terjadwal minggu ini untuk destinasi
+  // ini -- jadi minggu berjalan otomatis konvergen ke rasio data (mis. ~58%
+  // Carousel, bukan 100%), tanpa perlu nyimpen posisi rotasi terpisah.
+  function pickWeightedFormat(dest, dateStr, byContentType){
+    if(!byContentType || !byContentType.length) return null;
+    var total = byContentType.reduce(function(s,t){ return s + t.count; }, 0);
+    if(total === 0) return byContentType[0].key;
+
+    var d = new Date(dateStr + "T00:00:00");
+    if(isNaN(d.getTime())) return byContentType[0].key;
+    var weekStart = new Date(d); weekStart.setDate(d.getDate() - d.getDay());
+    var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+    function toYMD(dt){ return dt.toISOString().slice(0,10); }
+    var wsStr = toYMD(weekStart), weStr = toYMD(weekEnd);
+
+    var usedThisWeek = state.checklist.filter(function(it){
+      return it.dest_id === dest.id && it.post_date && it.post_date >= wsStr && it.post_date <= weStr && it.format;
+    });
+    var usedCount = {};
+    usedThisWeek.forEach(function(it){
+      var baseFormat = it.format.split(" (")[0]; // format tersimpan bisa ada embel-embel "(1.22% eng.)", ambil nama intinya aja
+      usedCount[baseFormat] = (usedCount[baseFormat] || 0) + 1;
+    });
+
+    var bestFormat = byContentType[0].key, bestDeficit = -Infinity;
+    byContentType.forEach(function(t){
+      var targetShare = t.count / total;
+      var actualCount = usedCount[t.key] || 0;
+      var expectedCount = targetShare * (usedThisWeek.length + 1);
+      var deficit = expectedCount - actualCount;
+      if(deficit > bestDeficit){ bestDeficit = deficit; bestFormat = t.key; }
+    });
+    return bestFormat;
+  }
+
+  function pickFromAgg(agg, dest, dateStr){
     if(!agg || !agg.byContentType || !agg.byContentType.length) return null;
     var bestType = agg.byContentType[0];
+    var chosenKey = (dest && dateStr) ? pickWeightedFormat(dest, dateStr, agg.byContentType) : bestType.key;
+    var chosenType = agg.byContentType.filter(function(t){ return t.key === chosenKey; })[0] || bestType;
     var topDays = (agg.byDay || []).slice(0, 2).map(function(d){ return d.key; });
     return {
       days: topDays,
-      format: bestType.key + " (" + bestType.avg.toFixed(2) + "% eng.)",
+      format: chosenType.key + " (" + chosenType.avg.toFixed(2) + "% eng.)",
       time: formatHourRange(agg.byHour),
       sampleSize: agg.sampleSize
     };
   }
 
-  // Cascade dari paling SPESIFIK ke paling UMUM -- tiap tingkat butuh minimal
-  // MIN_SAMPLE_FOR_SLICE data poin sebelum dipercaya, biar nggak nyimpulkan
-  // dari irisan yang kekecilan (mis. cuma 3 akun). basisLabel selalu diisi
-  // biar user tau PERSIS irisan data mana yang lagi dipakai.
-  function getInstagramCompetitorReco(dest){
+  function getInstagramCompetitorReco(dest, dateStr){
     var live = state.instagramBaselineLive;
     if(!live) return null;
 
@@ -973,33 +1018,33 @@
       var comboKey = dest.segmen_ukuran + "|" + dest.business_cluster + "|" + dest.area;
       var combo = live.byCombo ? live.byCombo[comboKey] : null;
       if(combo && combo.sampleSize >= MIN_SAMPLE_FOR_SLICE){
-        var r1 = pickFromAgg(combo);
+        var r1 = pickFromAgg(combo, dest, dateStr);
         if(r1){ r1.basisLabel = dest.business_cluster + " + " + dest.segmen_ukuran + " + " + dest.area; return r1; }
       }
     }
     if(dest && dest.business_cluster){
       var c = live.byCluster ? live.byCluster[dest.business_cluster] : null;
       if(c && c.sampleSize >= MIN_SAMPLE_FOR_SLICE){
-        var r2 = pickFromAgg(c);
+        var r2 = pickFromAgg(c, dest, dateStr);
         if(r2){ r2.basisLabel = "Cluster: " + dest.business_cluster; return r2; }
       }
     }
     if(dest && dest.segmen_ukuran){
       var s = live.bySegment ? live.bySegment[dest.segmen_ukuran] : null;
       if(s && s.sampleSize >= MIN_SAMPLE_FOR_SLICE){
-        var r3 = pickFromAgg(s);
+        var r3 = pickFromAgg(s, dest, dateStr);
         if(r3){ r3.basisLabel = "Segmen: " + dest.segmen_ukuran; return r3; }
       }
     }
     if(dest && dest.area){
       var a = live.byArea ? live.byArea[dest.area] : null;
       if(a && a.sampleSize >= MIN_SAMPLE_FOR_SLICE){
-        var r4 = pickFromAgg(a);
+        var r4 = pickFromAgg(a, dest, dateStr);
         if(r4){ r4.basisLabel = "Area: " + dest.area; return r4; }
       }
     }
     if(live.overall){
-      var r5 = pickFromAgg(live.overall);
+      var r5 = pickFromAgg(live.overall, dest, dateStr);
       if(r5){ r5.basisLabel = "Semua 575 akun kompetitor (belum ada profil segmen/cluster/area diisi utk destinasi ini)"; return r5; }
     }
     return null;
@@ -1035,10 +1080,10 @@
   //   2. Data kompetitor REAL 575 akun, di-cascade ke irisan paling spesifik
   //      yang datanya cukup (kombinasi > cluster > segmen > area > overall)
   //   3. Baseline riset eksternal (fallback terakhir, cuma ringkasan/kutipan)
-  function getRecommendation(dest){
+  function getRecommendation(dest, dateStr){
     var base = getBaselineForGroup(dest.group);
     var live = computeLiveBestDay(dest.id);
-    var competitorReco = dest.group === "Instagram" ? getInstagramCompetitorReco(dest) : null;
+    var competitorReco = dest.group === "Instagram" ? getInstagramCompetitorReco(dest, dateStr) : null;
 
     if(live){
       return {
@@ -1162,9 +1207,74 @@
   /* ---------- Matriks Kombinasi Terbaik -- semua irisan segmen x cluster x
      area yang bermakna, diranking, dengan aksi "Terapkan ke destinasi" yang
      nulis balik ke profil destinasi (field yang sama dipakai cascade
-     rekomendasi), jadi Kalender & Panduan ikut berubah otomatis. ---------- */
+     rekomendasi), jadi Kalender & Panduan ikut berubah otomatis.
+
+     Sekali diterapkan, destinasi itu TERKUNCI ke kombinasi tsb sampai jumlah
+     post selesai (done=true) mencapai target -- baru boleh ganti kombinasi
+     lain. Target dihitung dari format PALING JARANG dipakai di kombinasi itu
+     (ceil(1/proporsi terkecil)), dibatasi 5-15 post biar nggak ada yang
+     absurd panjang/pendek. Ini yang bikin tiap kombinasi beneran dapat
+     kesempatan wajar sebelum dinilai, bukan diganti-ganti tiap hari. ---------- */
 
   var SIGNIFICANT_MULTIPLIER = 1.5; // kombinasi "signifikan" = engagement-nya >= 1.5x rata-rata seluruh data
+  var LOCK_TARGET_MIN = 5, LOCK_TARGET_MAX = 15;
+
+  function computeTargetPosts(agg){
+    if(!agg || !agg.byContentType || !agg.byContentType.length) return LOCK_TARGET_MIN;
+    var total = agg.byContentType.reduce(function(s,t){ return s + t.count; }, 0);
+    if(total === 0) return LOCK_TARGET_MIN;
+    var minProportion = Math.min.apply(null, agg.byContentType.map(function(t){ return t.count / total; }));
+    var raw = Math.ceil(1 / minProportion);
+    return Math.max(LOCK_TARGET_MIN, Math.min(LOCK_TARGET_MAX, raw));
+  }
+
+  function getActiveLockForDest(destId){
+    return state.comboLock.filter(function(l){ return l.dest_id === destId && l.status === "active"; })[0] || null;
+  }
+
+  // Progress = post CHECKLIST yang sudah selesai (done=true) buat destinasi
+  // ini, dibuat SETELAH lock ini mulai. Pakai created_at (timestamp ISO
+  // presisi) bukan field created lama (cuma "16 Agu" tanpa tahun/jam) --
+  // item lama dari sebelum fitur ini ada otomatis nggak kehitung (aman,
+  // karena lock juga baru mulai dari sekarang).
+  function computeLockProgress(lock){
+    if(!lock) return 0;
+    return state.checklist.filter(function(it){
+      var isDone = it.done === true || it.done === "TRUE" || it.done === "true";
+      return it.dest_id === lock.dest_id && isDone && it.created_at && it.created_at >= lock.applied_at;
+    }).length;
+  }
+
+  function getComboHistoryForDest(destId){
+    var map = {};
+    state.comboLock.filter(function(l){ return l.dest_id === destId; }).forEach(function(l){
+      var key = l.segmen_ukuran + "|" + l.business_cluster + "|" + l.area;
+      map[key] = l; // kalau ada beberapa kali dicoba, yang terakhir menang (cukup buat status ringkas)
+    });
+    return map;
+  }
+
+  // Cek semua lock aktif, selesaikan yang progress-nya udah nyampe target.
+  // Dipanggil tiap render matriks (bukan real-time push, GAS nggak punya itu)
+  // -- jadi status ke-update paling lambat pas buka/refresh tab Laporan Analisa.
+  async function checkAndCompleteLocks(){
+    var actives = state.comboLock.filter(function(l){ return l.status === "active"; });
+    var completedNow = [];
+    for(var i=0; i<actives.length; i++){
+      var lock = actives[i];
+      var progress = computeLockProgress(lock);
+      var target = parseInt(lock.target_posts, 10) || LOCK_TARGET_MIN;
+      if(progress >= target){
+        try{
+          var nowIso = new Date().toISOString();
+          await apiWrite("comboLock", "update", { id: lock.id, row: { status: "completed", completed_at: nowIso } });
+          lock.status = "completed"; lock.completed_at = nowIso;
+          completedNow.push(lock);
+        }catch(err){ console.error("Gagal menyelesaikan lock:", err); }
+      }
+    }
+    return completedNow;
+  }
 
   function computeKombinasiMatrix(){
     var live = state.instagramBaselineLive;
@@ -1181,7 +1291,8 @@
         sampleSize: agg.sampleSize, avgEngagement: agg.avgEngagement,
         isSignificant: globalAvg > 0 && agg.avgEngagement >= globalAvg * SIGNIFICANT_MULTIPLIER,
         deltaPct: globalAvg > 0 ? ((agg.avgEngagement / globalAvg - 1) * 100) : 0,
-        format: picked ? picked.format : "—", days: picked ? picked.days.join(", ") : "—", time: picked ? picked.time : ""
+        format: picked ? picked.format : "—", days: picked ? picked.days.join(", ") : "—", time: picked ? picked.time : "",
+        targetPosts: computeTargetPosts(agg)
       };
     });
 
@@ -1189,6 +1300,47 @@
       .filter(function(x){ return x.sampleSize >= MIN_SAMPLE_FOR_SLICE; })
       .sort(function(a, b){ return b.avgEngagement - a.avgEngagement; })
       .slice(0, 10);
+  }
+
+  // Update tombol+status 1 baris matriks sesuai destinasi yang lagi dipilih
+  // di dropdown baris itu -- dipanggil pas render awal & tiap dropdown diganti.
+  function refreshMatrixRowState(row, m){
+    var sel = row.querySelector(".matrix-apply-select");
+    var btn = row.querySelector(".matrix-apply-btn");
+    var statusEl = row.querySelector(".matrix-apply-status");
+    var usedTag = row.querySelector(".matrix-used-tag");
+    if(!sel) return; // nggak ada destinasi Instagram sama sekali
+    var destId = sel.value;
+
+    var activeLock = getActiveLockForDest(destId);
+    var history = getComboHistoryForDest(destId);
+    var thisComboHistory = history[m.key];
+
+    if(activeLock){
+      var progress = computeLockProgress(activeLock);
+      var target = parseInt(activeLock.target_posts, 10) || LOCK_TARGET_MIN;
+      var isThisCombo = activeLock.segmen_ukuran === m.segmen_ukuran && activeLock.business_cluster === m.business_cluster && activeLock.area === m.area;
+      btn.disabled = true;
+      btn.textContent = "Terkunci";
+      statusEl.style.color = "";
+      statusEl.textContent = isThisCombo
+        ? "🔒 Kombinasi ini lagi aktif di destinasi ini — " + progress + "/" + target + " post selesai."
+        : "🔒 Destinasi ini terkunci ke kombinasi lain — " + progress + "/" + target + " post selesai. Selesaikan dulu sebelum ganti.";
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Terapkan";
+      statusEl.textContent = "";
+    }
+
+    if(usedTag){
+      if(thisComboHistory && thisComboHistory.status === "completed"){
+        usedTag.innerHTML = '<span class="used-tag used-tag-done">✓ Sudah pernah dicoba</span>';
+      } else if(thisComboHistory && thisComboHistory.status === "active"){
+        usedTag.innerHTML = '<span class="used-tag used-tag-active">⏳ Sedang aktif</span>';
+      } else {
+        usedTag.innerHTML = '<span class="used-tag used-tag-new">Belum pernah dicoba</span>';
+      }
+    }
   }
 
   function renderKombinasiMatrix(){
@@ -1203,13 +1355,32 @@
       return;
     }
 
+    checkAndCompleteLocks().then(function(completedNow){
+      var banner = "";
+      completedNow.forEach(function(lock){
+        var d = state.destinations.filter(function(x){ return x.id === lock.dest_id; })[0];
+        var triedKeys = Object.keys(getComboHistoryForDest(lock.dest_id));
+        var untried = matrix.filter(function(m){ return triedKeys.indexOf(m.key) === -1; }).slice(0, 3);
+        var untriedText = untried.length
+          ? untried.map(function(m){ return m.label; }).join("; ")
+          : "semua kombinasi di matriks top-10 sudah pernah dicoba untuk destinasi ini.";
+        banner +=
+          '<div class="report-block" style="border-left:3px solid var(--moss);">' +
+            '<b>Rotasi selesai:</b> "' + lock.business_cluster + ' + ' + lock.segmen_ukuran + ' + ' + lock.area + '" untuk ' + (d ? d.name : lock.dest_id) +
+            ' (' + lock.target_posts + '/' + lock.target_posts + ' post). Destinasi ini sekarang terbuka lagi.<br>' +
+            '<span style="color:var(--ink-sec);">Belum pernah dicoba: ' + untriedText + '</span>' +
+          '</div>';
+      });
+      if(banner) content.insertAdjacentHTML("afterbegin", banner);
+    });
+
     var igDest = state.destinations.filter(function(d){ return d.group === "Instagram"; });
     var destOptions = igDest.map(function(d){ return '<option value="' + d.id + '">' + d.name + '</option>'; }).join("");
 
     var rowsHtml = matrix.map(function(m, i){
       var applyControl = igDest.length
-        ? '<div class="matrix-apply-row">' +
-            '<select class="matrix-apply-select" data-seg="' + m.segmen_ukuran + '" data-clus="' + m.business_cluster + '" data-area="' + m.area + '">' + destOptions + '</select>' +
+        ? '<div class="matrix-used-tag"></div><div class="matrix-apply-row">' +
+            '<select class="matrix-apply-select" data-seg="' + m.segmen_ukuran + '" data-clus="' + m.business_cluster + '" data-area="' + m.area + '" data-target="' + m.targetPosts + '">' + destOptions + '</select>' +
             '<button class="btn-ghost matrix-apply-btn" type="button">Terapkan</button>' +
           '</div><div class="matrix-apply-status"></div>'
         : '<span style="color:var(--ink-muted);font-size:11px;">Belum ada destinasi Instagram</span>';
@@ -1221,41 +1392,64 @@
         '<td>' + m.format + '</td>' +
         '<td>' + m.days + '</td>' +
         '<td>' + (m.time || "—") + '</td>' +
-        '<td>' + applyControl + '</td>' +
+        '<td>' + applyControl + '<div style="font-size:10px;color:var(--ink-muted);margin-top:3px;">Target kunci: ' + m.targetPosts + ' post</div></td>' +
       '</tr>';
     }).join("");
 
-    content.innerHTML =
+    content.insertAdjacentHTML("beforeend",
       '<div class="report-block" style="overflow-x:auto;">' +
         '<table class="matrix-table"><thead><tr>' +
           '<th>Kombinasi</th><th>Engagement</th><th>Sampel</th><th>Format terbaik</th><th>Hari terbaik</th><th>Jam terbaik</th><th>Aksi</th>' +
         '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
-      '</div>';
+      '</div>'
+    );
 
-    content.querySelectorAll(".matrix-apply-btn").forEach(function(btn){
+    var tbody = content.querySelector("tbody");
+    matrix.forEach(function(m, i){
+      var row = tbody.rows[i];
+      var sel = row.querySelector(".matrix-apply-select");
+      if(sel) sel.addEventListener("change", function(){ refreshMatrixRowState(row, m); });
+      refreshMatrixRowState(row, m);
+
+      var btn = row.querySelector(".matrix-apply-btn");
+      if(!btn) return;
       btn.addEventListener("click", async function(){
-        var row = btn.closest("tr");
-        var sel = row.querySelector(".matrix-apply-select");
-        var destId = sel.value;
-        var destName = sel.options[sel.selectedIndex].text;
+        var sel2 = row.querySelector(".matrix-apply-select");
+        var destId = sel2.value;
+        var destName = sel2.options[sel2.selectedIndex].text;
         var statusEl = row.querySelector(".matrix-apply-status");
+
+        if(getActiveLockForDest(destId)){
+          statusEl.style.color = "var(--brick)";
+          statusEl.textContent = "Destinasi ini masih terkunci ke kombinasi lain. Selesaikan rotasinya dulu.";
+          return;
+        }
+
         btn.disabled = true; btn.textContent = "Menerapkan...";
         try{
           await apiWrite("destinations", "update", { id: destId, row: {
-            segmen_ukuran: sel.getAttribute("data-seg"),
-            business_cluster: sel.getAttribute("data-clus"),
-            area: sel.getAttribute("data-area")
+            segmen_ukuran: m.segmen_ukuran, business_cluster: m.business_cluster, area: m.area
           }});
           var d = state.destinations.filter(function(x){ return x.id === destId; })[0];
-          if(d){ d.segmen_ukuran = sel.getAttribute("data-seg"); d.business_cluster = sel.getAttribute("data-clus"); d.area = sel.getAttribute("data-area"); }
-          statusEl.textContent = "✓ Diterapkan ke " + destName + " -- Kalender & Panduan sudah update.";
+          if(d){ d.segmen_ukuran = m.segmen_ukuran; d.business_cluster = m.business_cluster; d.area = m.area; }
+
+          var lockRow = {
+            dest_id: destId, segmen_ukuran: m.segmen_ukuran, business_cluster: m.business_cluster, area: m.area,
+            target_posts: m.targetPosts, applied_at: new Date().toISOString(), completed_at: "", status: "active"
+          };
+          var lockRes = await apiWrite("comboLock", "add", { row: lockRow });
+          lockRow.id = lockRes.id;
+          state.comboLock.push(lockRow);
+
+          statusEl.style.color = "";
+          statusEl.textContent = "✓ Diterapkan ke " + destName + " -- terkunci sampai " + m.targetPosts + " post selesai. Kalender & Panduan sudah update.";
           renderDestTable(); renderBaselineGrid();
           var calDateVal = document.getElementById("calDate").value;
           if(calDateVal) renderCalendarForDate(calDateVal);
+          refreshMatrixRowState(row, m);
         }catch(err){
           statusEl.style.color = "var(--brick)";
           statusEl.textContent = "Gagal: " + err.message;
-        }finally{
           btn.disabled = false; btn.textContent = "Terapkan";
         }
       });
@@ -1509,7 +1703,8 @@
       dest_id: document.getElementById("itemDest").value,
       label_id: document.getElementById("itemLabel").value,
       done: false,
-      created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" })
+      created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" }),
+      created_at: new Date().toISOString()
     };
     try{
       var res = await apiWrite("checklist", "add", { row: row });
