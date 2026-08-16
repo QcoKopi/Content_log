@@ -3,24 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Roastery Content Log</title>
+<title>Content Plan</title>
 <style>
   :root{
-    /* Palet & token diambil langsung dari qcoid.com/roasting.html -- bukan
-       ditebak/kira-kira. Nama variabel disamakan sengaja biar gampang
-       dicocokkan lagi kalau brand-nya update warna di masa depan. */
-    --bg:#faf9f6; --bg-warm:#f5f3ee; --bg-cream:#f0ebe3;
-    --card:#ffffff; --bg-input:#f5f3ee;
-    --text:#1a1a1a; --text-sec:#5c5c5c; --text-muted:#9a9a9a;
-    --primary:#2c2c2c;
-    --accent:#b8926a; --accent-light:#e8d5b5; --accent-dark:#8b6f4e;
-    --border:#e8e6e1; --border-strong:#ddd8d0;
-    --green:#6b8f5c; --rose:#a15c72; --blue:#7a8fa6; --rust:#c2543f;
-    --radius:12px; --shadow:0 4px 20px rgba(0,0,0,0.06); --shadow-lift:0 8px 24px rgba(0,0,0,0.10);
+    /* Kontras diverifikasi WCAG AA sebelum dipakai (teks normal >=4.5:1,
+       badge/UI besar >=3:1) -- bg dinaikkan ke putih penuh, teks sekunder
+       digelapkan signifikan dari draft sebelumnya yang kepucatan/kurang
+       kebaca. Aksen diganti ke warna lebih jenuh/hidup, cocok buat tool
+       kerja harian (bukan situs marketing yang tenang).
+       Referensi awal token dari qcoid.com/roasting.html, disesuaikan untuk
+       kebutuhan kontras & energi visual tool ini. */
+    --bg:#ffffff; --bg-warm:#f7f5f2;
+    --card:#ffffff; --bg-input:#f7f5f2;
+    --text:#1a1a1a; --text-sec:#4a4a4a; --text-muted:#6b6b6b;
+    --primary:#1a1a1a;
+    --accent:#e8622c; --accent-light:#fde4d5; --accent-dark:#c94e1c;
+    --border:#e0ddd8; --border-strong:#c9c4bc;
+    --green:#2e9e5b; --rose:#d6416f; --blue:#3d7ab8; --rust:#d6341f;
+    --radius:12px; --shadow:0 4px 20px rgba(0,0,0,0.08); --shadow-lift:0 8px 24px rgba(0,0,0,0.12);
     --font-head:"Georgia","Times New Roman",serif;
     --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     --font-mono:"SFMono-Regular",Consolas,monospace;
-    --label-0:#b8926a; --label-1:#7a8fa6; --label-2:#a15c72; --label-3:#6b8f5c; --label-4:#c2543f;
+    --label-0:#e8622c; --label-1:#3d7ab8; --label-2:#d6416f; --label-3:#2e9e5b; --label-4:#d6341f;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased;}
@@ -30,7 +34,7 @@
   button{font-family:inherit;}
 
   header.log-header{border-bottom:1px solid var(--border);padding-bottom:22px;margin-bottom:20px;}
-  .log-meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;color:var(--accent-dark);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:14px;background:rgba(184,146,106,0.1);padding:4px 14px;border-radius:100px;width:fit-content;}
+  .log-meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;color:var(--accent-dark);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:14px;background:rgba(232,98,44,0.1);padding:4px 14px;border-radius:100px;width:fit-content;}
   .log-meta::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);}
   h1{font-family:var(--font-head);font-size:clamp(26px,5vw,36px);font-weight:700;margin:0 0 8px;letter-spacing:-0.01em;}
   .subhead{color:var(--text-sec);font-size:14px;max-width:66ch;margin:0;}
@@ -56,13 +60,13 @@
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:28px;overflow-x:auto;}
   .tab-btn{background:transparent;border:none;color:var(--text-muted);font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.03em;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
   .tab-btn:hover{color:var(--text-sec);}
-  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent);}
   .tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
 
   .section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
-  .section-num{font-family:var(--font-mono);font-size:12px;color:var(--accent);}
+  .section-num{font-family:var(--font-mono);font-size:12px;color:var(--accent-dark);}
   h2{font-family:var(--font-head);font-size:18px;font-weight:600;margin:0;}
   h3{font-family:var(--font-head);font-size:14.5px;font-weight:600;margin:0 0 12px;}
   .section-sub{color:var(--text-muted);font-size:12.5px;margin:0 0 16px;}
@@ -72,8 +76,8 @@
   .progress-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;}
   .progress-count{font-family:var(--font-head);font-size:20px;font-weight:700;}
   .progress-count span{color:var(--accent);}
-  #curveSvg{display:block;width:100%;height:56px;}
-  .progress-markers{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted);margin-top:2px;padding:0 2px;}
+  .progress-bar-track{width:100%;height:8px;background:var(--border);border-radius:100px;overflow:hidden;margin-top:10px;}
+  .progress-bar-fill{height:100%;background:var(--accent);border-radius:100px;width:0%;transition:width 0.4s ease;}
 
   /* ---- Reference cards ---- */
   .label-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
@@ -119,7 +123,7 @@
   table.schedule th:first-child{background:var(--bg-warm);z-index:2;}
   table.schedule td:first-child{font-weight:500;z-index:1;}
   table.schedule tr:last-child td{border-bottom:none;}
-  .platform-group-row td{background:var(--bg-warm);font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);text-align:left;padding:6px 10px;position:sticky;left:0;}
+  .platform-group-row td{background:var(--bg-warm);font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-dark);text-align:left;padding:6px 10px;position:sticky;left:0;}
   .cell-label{display:inline-block;min-width:34px;padding:3px 6px;border-radius:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:600;color:var(--text);}
   .cell-off{color:var(--border-strong);font-size:11px;}
 
@@ -130,7 +134,7 @@
   #addForm input:focus,#addForm select:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .filter-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
   .filter-tabs button{background:transparent;border:1px solid var(--border-strong);color:var(--text-sec);font-family:var(--font-mono);font-size:11.5px;padding:6px 13px;border-radius:20px;cursor:pointer;}
-  .filter-tabs button.active{background:rgba(184,146,106,0.14);border-color:var(--accent);color:var(--text);}
+  .filter-tabs button.active{background:rgba(232,98,44,0.14);border-color:var(--accent);color:var(--text);}
   #checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
   .item{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--rust);border-radius:8px;padding:12px 14px;}
   .item.done{border-left-color:var(--green);}
@@ -170,7 +174,7 @@
   .live-tag{display:inline-block;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;background:var(--green);color:#fff;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
   .baseline-tag{display:inline-block;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;background:var(--border-strong);color:var(--text-sec);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
 
-  .cal-add-toggle{background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--font-mono);font-size:11.5px;padding:7px 14px;border-radius:7px;cursor:pointer;}
+  .cal-add-toggle{background:transparent;border:1px solid var(--accent);color:var(--accent-dark);font-family:var(--font-mono);font-size:11.5px;padding:7px 14px;border-radius:7px;cursor:pointer;}
   .cal-add-toggle:hover{background:var(--accent);color:var(--primary);}
   .cal-add-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
   .cal-add-form.open{display:block;}
@@ -191,9 +195,9 @@
 <div class="wrap">
 
   <header class="log-header">
-    <div class="log-meta">Batch Log — Multi-Platform Content</div>
-    <h1>Roastery Content Log</h1>
-    <p class="subhead">Label, akun, jadwal, checklist, dan KPI tersimpan di Google Sheets kamu sendiri lewat Google Apps Script — bukan hardcode, bisa diatur langsung dari sini atau dari spreadsheet-nya.</p>
+    <div class="log-meta">Social Media Content Plan</div>
+    <h1>Content Plan</h1>
+    <p class="subhead">Jadwal posting, label konten, dan checklist untuk semua akun — Instagram, TikTok, Facebook Page &amp; Marketplace — dalam satu sistem yang tersambung ke Google Sheets kamu sendiri.</p>
   </header>
 
   <div class="settings-bar" id="settingsBar">
@@ -205,25 +209,67 @@
 
   <div class="progress-section">
     <div class="progress-label">Progress minggu ini (semua platform)</div>
-    <div class="progress-count" id="progressCount"><span>0</span>/0 selesai</div>
-    <svg id="curveSvg" viewBox="0 0 400 56" preserveAspectRatio="none"></svg>
-    <div class="progress-markers"><span>Green bean</span><span>First crack</span><span>Second crack</span><span>Roast selesai</span></div>
+    <div class="progress-count" id="progressCount"><span>0</span>/0 konten selesai</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressBarFill"></div></div>
   </div>
 
   <nav class="tabs" id="tabs">
-    <button class="tab-btn active" data-tab="panduan">Panduan</button>
-    <button class="tab-btn" data-tab="kelola">Kelola Label &amp; Akun</button>
-    <button class="tab-btn" data-tab="jadwal">Jadwal Rotasi</button>
-    <button class="tab-btn" data-tab="kalender">Kalender</button>
+    <button class="tab-btn active" data-tab="kalender">Kalender</button>
     <button class="tab-btn" data-tab="checklist">Checklist</button>
+    <button class="tab-btn" data-tab="jadwal">Jadwal Rotasi</button>
+    <button class="tab-btn" data-tab="panduan">Panduan</button>
+    <button class="tab-btn" data-tab="kelola">Kelola Label &amp; Akun</button>
     <button class="tab-btn" data-tab="kpi">KPI</button>
   </nav>
 
-  <!-- ===== TAB: PANDUAN ===== -->
-  <div class="tab-panel active" data-panel="panduan">
+  <!-- ===== TAB: KALENDER ===== -->
+  <div class="tab-panel active" data-panel="kalender">
     <section>
-      <div class="section-head"><span class="section-num">01</span><h2>Panduan Cepat per Platform</h2></div>
-      <p class="section-sub">Bukan teks tetap — dibaca langsung dari tab "Baseline" di spreadsheet, dan bergeser ke rekomendasi berbasis KPI kamu sendiri begitu datanya cukup (lihat label hijau "Data Kamu" di tab Kalender).</p>
+      <div class="section-head"><span class="section-num">01</span><h2>Kalender Posting</h2></div>
+      <p class="section-sub">Pilih tanggal — sistem nunjukkin akun mana yang jadwalnya posting hari itu, label apa (dari rotasi), dan format/jam yang direkomendasikan. Isian di form "Tambah ke Checklist" sudah mengikuti rekomendasi ini, tinggal isi ide kontennya.</p>
+      <div class="cal-picker">
+        <input type="date" id="calDate">
+        <span class="cal-daylabel" id="calDayLabel"></span>
+      </div>
+      <div id="calResults"></div>
+    </section>
+  </div>
+
+  <!-- ===== TAB: CHECKLIST ===== -->
+  <div class="tab-panel" data-panel="checklist">
+    <section>
+      <div class="section-head"><span class="section-num">02</span><h2>Checklist Konten</h2></div>
+      <p class="section-sub">Lacak status konten per destinasi, dari ide sampai tayang. Form di bawah buat tambah cepat tanpa rekomendasi — kalau mau dipandu label/format/jam sesuai jadwal &amp; analisa, pakai tab <b>Kalender</b> (lebih disarankan, biar nggak salah pilih kombinasi).</p>
+      <form id="addForm">
+        <input type="text" id="itemText" placeholder="Nama/ide konten…" autocomplete="off" required>
+        <select id="itemDest"></select>
+        <select id="itemLabel"></select>
+        <button type="submit" class="btn">Tambah</button>
+      </form>
+      <div class="filter-tabs" id="filterTabs">
+        <button data-filter="all" class="active">Semua</button>
+        <button data-filter="todo">Belum</button>
+        <button data-filter="done">Selesai</button>
+      </div>
+      <ul id="checklist"></ul>
+    </section>
+  </div>
+
+  <!-- ===== TAB: JADWAL ===== -->
+  <div class="tab-panel" data-panel="jadwal">
+    <section>
+      <div class="section-head"><span class="section-num">03</span><h2>Jadwal Rotasi Label</h2></div>
+      <p class="section-sub">Dihitung otomatis dari data Label &amp; Destinasi. Kalau destinasi ber-rotasi-penuh lebih banyak dari jumlah label, sesekali ada yang bertepatan di hari yang sama — itu wajar secara matematis, bukan bug.</p>
+      <div class="label-legend" id="labelLegend"></div>
+      <div class="schedule-scroll"><table class="schedule" id="scheduleTable"></table></div>
+    </section>
+  </div>
+
+  <!-- ===== TAB: PANDUAN ===== -->
+  <div class="tab-panel" data-panel="panduan">
+    <section>
+      <div class="section-head"><span class="section-num">04</span><h2>Panduan Cepat per Platform</h2></div>
+      <p class="section-sub">Tiga tingkat sumber, otomatis pakai yang paling relevan: <b>Data Kamu</b> (KPI akun kamu sendiri, begitu cukup entrinya) &gt; <b>Data Real</b> (dihitung live dari 6.025 post/reel milik 575 akun kompetitor asli, bukan ringkasan) &gt; <b>Baseline</b> (kutipan riset eksternal, cuma untuk platform yang belum kita punya data aslinya).</p>
       <div class="platform-grid" id="baselineGrid"></div>
       <details class="caveat">
         <summary>Sumber &amp; keterbatasan riset waktu posting</summary>
@@ -238,7 +284,7 @@
   <!-- ===== TAB: KELOLA ===== -->
   <div class="tab-panel" data-panel="kelola">
     <section>
-      <div class="section-head"><span class="section-num">02</span><h2>Label Konten</h2></div>
+      <div class="section-head"><span class="section-num">05</span><h2>Label Konten</h2></div>
       <p class="section-sub">Urutan di sini = urutan rotasi. Tambah/edit/hapus langsung berlaku ke Jadwal Rotasi.</p>
       <div class="manager-block">
         <table class="data-table" id="labelsTable"><thead><tr><th>Label</th><th>Warna</th><th></th></tr></thead><tbody></tbody></table>
@@ -252,7 +298,7 @@
     </section>
 
     <section>
-      <div class="section-head"><span class="section-num">03</span><h2>Akun / Destinasi Posting</h2></div>
+      <div class="section-head"><span class="section-num">06</span><h2>Akun / Destinasi Posting</h2></div>
       <p class="section-sub">Atur hari posting, titik mulai rotasi, dan (khusus Marketplace) label mana saja yang boleh dipakai.</p>
       <div class="manager-block">
         <table class="data-table" id="destTable"><thead><tr><th>Nama</th><th>Grup</th><th>Hari</th><th>Mulai dari</th><th>Pool label</th><th></th></tr></thead><tbody></tbody></table>
@@ -276,49 +322,6 @@
           <div class="field"><button class="btn" id="addDestBtn">Tambah Destinasi</button></div>
         </div>
       </div>
-    </section>
-  </div>
-
-  <!-- ===== TAB: JADWAL ===== -->
-  <div class="tab-panel" data-panel="jadwal">
-    <section>
-      <div class="section-head"><span class="section-num">04</span><h2>Jadwal Rotasi Label</h2></div>
-      <p class="section-sub">Dihitung otomatis dari data Label &amp; Destinasi. Kalau destinasi ber-rotasi-penuh lebih banyak dari jumlah label, sesekali ada yang bertepatan di hari yang sama — itu wajar secara matematis, bukan bug.</p>
-      <div class="label-legend" id="labelLegend"></div>
-      <div class="schedule-scroll"><table class="schedule" id="scheduleTable"></table></div>
-    </section>
-  </div>
-
-  <!-- ===== TAB: KALENDER ===== -->
-  <div class="tab-panel" data-panel="kalender">
-    <section>
-      <div class="section-head"><span class="section-num">05</span><h2>Kalender Posting</h2></div>
-      <p class="section-sub">Pilih tanggal — sistem nunjukkin akun mana yang jadwalnya posting hari itu, label apa (dari rotasi), dan format/jam yang direkomendasikan. Isian di form "Tambah ke Checklist" sudah mengikuti rekomendasi ini, tinggal isi ide kontennya.</p>
-      <div class="cal-picker">
-        <input type="date" id="calDate">
-        <span class="cal-daylabel" id="calDayLabel"></span>
-      </div>
-      <div id="calResults"></div>
-    </section>
-  </div>
-
-  <!-- ===== TAB: CHECKLIST ===== -->
-  <div class="tab-panel" data-panel="checklist">
-    <section>
-      <div class="section-head"><span class="section-num">06</span><h2>Checklist Konten</h2></div>
-      <p class="section-sub">Lacak status konten per destinasi, dari ide sampai tayang. Form di bawah buat tambah cepat tanpa rekomendasi — kalau mau dipandu label/format/jam sesuai jadwal &amp; analisa, pakai tab <b>Kalender</b> (lebih disarankan, biar nggak salah pilih kombinasi).</p>
-      <form id="addForm">
-        <input type="text" id="itemText" placeholder="Nama/ide konten…" autocomplete="off" required>
-        <select id="itemDest"></select>
-        <select id="itemLabel"></select>
-        <button type="submit" class="btn">Tambah</button>
-      </form>
-      <div class="filter-tabs" id="filterTabs">
-        <button data-filter="all" class="active">Semua</button>
-        <button data-filter="todo">Belum</button>
-        <button data-filter="done">Selesai</button>
-      </div>
-      <ul id="checklist"></ul>
     </section>
   </div>
 
@@ -367,7 +370,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [] };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], instagramBaselineLive: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -418,6 +421,8 @@
     state.checklist = data.checklist || [];
     state.kpi = data.kpi || [];
     state.baseline = data.baseline || [];
+    // null = tab CompetitorData belum diimpor; {error:...} = ada masalah baca -- dua-duanya berarti "nggak ada data real", jatuh balik ke Baseline biasa
+    state.instagramBaselineLive = (data.instagramBaselineLive && !data.instagramBaselineLive.error) ? data.instagramBaselineLive : null;
   }
 
   async function connectAndLoad(){
@@ -660,6 +665,8 @@
 
       var sourceTag = reco.source === "live"
         ? '<span class="live-tag">Data Kamu (' + reco.sampleSize + ' entri)</span>'
+        : reco.source === "competitor"
+        ? '<span class="live-tag" style="background:var(--blue);">Data Real (' + reco.sampleSize + ' post)</span>'
         : '<span class="baseline-tag">Baseline</span>';
 
       card.innerHTML =
@@ -758,6 +765,23 @@
     return state.baseline.filter(function(b){ return b.group === group; })[0] || null;
   }
 
+  // Ambil rekomendasi dari data kompetitor REAL (575 akun, dihitung live di
+  // GAS dari tab CompetitorData) -- ini bukan teks ringkasan, ini hasil
+  // agregasi baris asli. Cuma tersedia untuk Instagram (satu-satunya
+  // platform yang benar-benar kita scrape datanya).
+  function getInstagramCompetitorReco(){
+    var live = state.instagramBaselineLive;
+    if(!live || !live.byContentType || !live.byContentType.length) return null;
+    var bestType = live.byContentType[0];
+    var topDays = (live.byDay || []).slice(0, 2).map(function(d){ return d.key; });
+    return {
+      days: topDays,
+      format: bestType.key + " (" + bestType.avg.toFixed(2) + "% eng.)",
+      time: "",
+      sampleSize: live.sampleSize
+    };
+  }
+
   // Cari hari-of-week dengan rata-rata nilai KPI tertinggi untuk 1 destinasi.
   // Return null kalau data belum cukup (di bawah MIN_KPI_FOR_LIVE) -- di titik
   // itu caller HARUS jatuh balik ke baseline, bukan nekat nyimpulkan dari
@@ -783,17 +807,31 @@
     return bestDay ? { day: bestDay, avg: bestAvg, sampleSize: entries.length } : null;
   }
 
-  // Rekomendasi gabungan untuk 1 destinasi -- coba live dulu, baru baseline.
+  // Rekomendasi gabungan -- 3 tingkat prioritas, dari yang paling relevan:
+  //   1. KPI kamu sendiri buat destinasi ini (paling relevan, akun kamu sendiri)
+  //   2. Data kompetitor REAL 575 akun (khusus Instagram, dihitung live)
+  //   3. Baseline riset eksternal (fallback terakhir, cuma ringkasan/kutipan)
   function getRecommendation(dest){
     var base = getBaselineForGroup(dest.group);
     var live = computeLiveBestDay(dest.id);
+    var competitorReco = dest.group === "Instagram" ? getInstagramCompetitorReco() : null;
+
+    if(live){
+      return {
+        days: [live.day], format: competitorReco ? competitorReco.format.split(" (")[0] : (base ? base.best_format : ""),
+        time: base ? base.best_time : "", source: "live", sampleSize: live.sampleSize, baseSource: ""
+      };
+    }
+    if(competitorReco){
+      return {
+        days: competitorReco.days, format: competitorReco.format, time: base ? base.best_time : "",
+        source: "competitor", sampleSize: competitorReco.sampleSize, baseSource: "575 akun kompetitor, 90 hari"
+      };
+    }
     return {
-      days: live ? [live.day] : (base ? (base.best_days || "").split(",").filter(Boolean) : []),
-      format: base ? base.best_format : "",
-      time: base ? base.best_time : "",
-      source: live ? "live" : "baseline",
-      sampleSize: live ? live.sampleSize : 0,
-      baseSource: base ? base.source : ""
+      days: base ? (base.best_days || "").split(",").filter(Boolean) : [],
+      format: base ? base.best_format : "", time: base ? base.best_time : "",
+      source: "baseline", sampleSize: 0, baseSource: base ? base.source : ""
     };
   }
 
@@ -805,13 +843,24 @@
     }
     el.innerHTML = "";
     state.baseline.forEach(function(b){
+      var isInstagram = b.group === "Instagram";
+      var competitorReco = isInstagram ? getInstagramCompetitorReco() : null;
+
       var card = document.createElement("div");
       card.className = "platform-card";
-      card.innerHTML =
-        '<div class="pname">' + b.group + '</div>' +
-        '<div class="prow">Hari terbaik: <b>' + (b.best_days || "-") + '</b></div>' +
-        '<div class="prow">Format: <b>' + (b.best_format || "-") + '</b>' + (b.best_time ? ' &middot; jam ' + b.best_time : '') + '</div>' +
-        '<div class="baseline-source">' + (b.source || "") + '</div>';
+      if(competitorReco){
+        card.innerHTML =
+          '<div class="pname">' + b.group + ' <span class="live-tag" style="background:var(--blue);">Data Real (' + competitorReco.sampleSize + ' post)</span></div>' +
+          '<div class="prow">Hari terbaik: <b>' + competitorReco.days.join(", ") + '</b></div>' +
+          '<div class="prow">Format terkuat: <b>' + competitorReco.format + '</b></div>' +
+          '<div class="baseline-source">Dihitung live dari 575 akun kompetitor (90 hari) -- bukan ringkasan tetap.</div>';
+      } else {
+        card.innerHTML =
+          '<div class="pname">' + b.group + '</div>' +
+          '<div class="prow">Hari terbaik: <b>' + (b.best_days || "-") + '</b></div>' +
+          '<div class="prow">Format: <b>' + (b.best_format || "-") + '</b>' + (b.best_time ? ' &middot; jam ' + b.best_time : '') + '</div>' +
+          '<div class="baseline-source">' + (b.source || "") + (isInstagram ? ' -- import CompetitorData.csv biar dihitung dari data asli, bukan ringkasan ini.' : '') + '</div>';
+      }
       el.appendChild(card);
     });
   }
@@ -917,26 +966,8 @@
     var total = state.checklist.length;
     var done = state.checklist.filter(function(it){ return it.done === true || it.done === "TRUE" || it.done === "true"; }).length;
     var pct = total === 0 ? 0 : done / total;
-    document.getElementById("progressCount").innerHTML = "<span>" + done + "</span>/" + total + " selesai";
-    drawCurve(pct);
-  }
-
-  function drawCurve(pct){
-    var svg = document.getElementById("curveSvg");
-    var w = 400, h = 56;
-    var x1 = 0, y1 = h - 6;
-    var x2 = w * Math.min(pct,1), y2 = h - 6 - (h - 14) * (pct * (2 - pct));
-    var cx = w * 0.35, cy = h - 6;
-    var path = "M " + x1 + " " + y1 + " Q " + cx + " " + cy + " " + x2 + " " + y2;
-    var fillPath = path + " L " + x2 + " " + h + " L 0 " + h + " Z";
-    svg.innerHTML =
-      '<defs><linearGradient id="curveFill" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#b8926a" stop-opacity="0.35"/>' +
-      '<stop offset="100%" stop-color="#b8926a" stop-opacity="0"/></linearGradient></defs>' +
-      '<line x1="0" y1="' + (h-6) + '" x2="' + w + '" y2="' + (h-6) + '" stroke="#e8e6e1" stroke-width="1"/>' +
-      '<path d="' + fillPath + '" fill="url(#curveFill)"/>' +
-      '<path d="' + path + '" fill="none" stroke="#b8926a" stroke-width="2.5" stroke-linecap="round"/>' +
-      '<circle cx="' + x2 + '" cy="' + y2 + '" r="4.5" fill="#b8926a"/>';
+    document.getElementById("progressCount").innerHTML = "<span>" + done + "</span>/" + total + " konten selesai";
+    document.getElementById("progressBarFill").style.width = (pct * 100) + "%";
   }
 
   /* ---------- KPI ---------- */
