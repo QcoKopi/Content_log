@@ -4,149 +4,183 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roastery Content Log</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#17110D; --bg-panel:#241A13; --bg-panel-raised:#2E2119; --bg-input:#1D1510;
-    --text-primary:#F2E9DC; --text-secondary:#B5A493; --text-dim:#7C6B5B;
-    --accent-amber:#C68A3E; --accent-amber-dim:#8A6230; --accent-green:#8FA05C; --accent-rust:#B2543C;
-    --accent-red:#C24A38;
-    --border:#3D2E22; --border-light:#4A3A2C;
-    --font-display:'Space Grotesk',sans-serif; --font-body:'IBM Plex Sans',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+    /* Palet & token diambil langsung dari qcoid.com/roasting.html -- bukan
+       ditebak/kira-kira. Nama variabel disamakan sengaja biar gampang
+       dicocokkan lagi kalau brand-nya update warna di masa depan. */
+    --bg:#faf9f6; --bg-warm:#f5f3ee; --bg-cream:#f0ebe3;
+    --card:#ffffff; --bg-input:#f5f3ee;
+    --text:#1a1a1a; --text-sec:#5c5c5c; --text-muted:#9a9a9a;
+    --primary:#2c2c2c;
+    --accent:#b8926a; --accent-light:#e8d5b5; --accent-dark:#8b6f4e;
+    --border:#e8e6e1; --border-strong:#ddd8d0;
+    --green:#6b8f5c; --rose:#a15c72; --blue:#7a8fa6; --rust:#c2543f;
+    --radius:12px; --shadow:0 4px 20px rgba(0,0,0,0.06); --shadow-lift:0 8px 24px rgba(0,0,0,0.10);
+    --font-head:"Georgia","Times New Roman",serif;
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --font-mono:"SFMono-Regular",Consolas,monospace;
+    --label-0:#b8926a; --label-1:#7a8fa6; --label-2:#a15c72; --label-3:#6b8f5c; --label-4:#c2543f;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);
-    background-image:radial-gradient(ellipse 800px 400px at 15% -5%, rgba(198,138,62,0.10), transparent),
-      radial-gradient(ellipse 600px 500px at 100% 20%, rgba(143,160,92,0.06), transparent);
-    color:var(--text-primary);font-family:var(--font-body);line-height:1.5;-webkit-font-smoothing:antialiased;}
-  ::selection{background:var(--accent-amber);color:#17110D;}
-  a{color:var(--accent-amber);}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--accent-light);color:var(--primary);}
+  a{color:var(--accent-dark);}
   .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
   button{font-family:inherit;}
 
   header.log-header{border-bottom:1px solid var(--border);padding-bottom:22px;margin-bottom:20px;}
-  .log-meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;color:var(--accent-amber);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-  .log-meta::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent-amber);box-shadow:0 0 0 3px rgba(198,138,62,0.25);}
-  h1{font-family:var(--font-display);font-size:clamp(26px,5vw,36px);font-weight:700;margin:0 0 8px;letter-spacing:-0.01em;}
-  .subhead{color:var(--text-secondary);font-size:14px;max-width:66ch;margin:0;}
+  .log-meta{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;color:var(--accent-dark);text-transform:uppercase;display:flex;align-items:center;gap:10px;margin-bottom:14px;background:rgba(184,146,106,0.1);padding:4px 14px;border-radius:100px;width:fit-content;}
+  .log-meta::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  h1{font-family:var(--font-head);font-size:clamp(26px,5vw,36px);font-weight:700;margin:0 0 8px;letter-spacing:-0.01em;}
+  .subhead{color:var(--text-sec);font-size:14px;max-width:66ch;margin:0;}
 
   /* ---- Settings bar ---- */
-  .settings-bar{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-  .settings-bar input[type="text"]{flex:1;min-width:220px;background:var(--bg-input);border:1px solid var(--border-light);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:9px 11px;border-radius:7px;}
-  .settings-bar input:focus{outline:2px solid var(--accent-amber);outline-offset:1px;}
-  .btn{background:var(--accent-amber);color:#1A1108;border:none;font-family:var(--font-mono);font-weight:600;font-size:12px;letter-spacing:0.02em;padding:9px 16px;border-radius:7px;cursor:pointer;white-space:nowrap;}
-  .btn:hover{background:#D69A4E;}
-  .btn:focus-visible{outline:2px solid var(--text-primary);outline-offset:2px;}
-  .btn-ghost{background:transparent;border:1px solid var(--border-light);color:var(--text-secondary);}
-  .btn-ghost:hover{border-color:var(--accent-amber);color:var(--text-primary);}
-  .btn-danger{background:transparent;border:1px solid var(--accent-red);color:var(--accent-red);}
-  .btn-danger:hover{background:var(--accent-red);color:#F2E9DC;}
-  .conn-status{font-family:var(--font-mono);font-size:11px;display:flex;align-items:center;gap:6px;color:var(--text-dim);}
-  .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);}
-  .conn-dot.ok{background:var(--accent-green);}
-  .conn-dot.err{background:var(--accent-red);}
-  .settings-note{width:100%;font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .settings-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .settings-bar input[type="text"]{flex:1;min-width:220px;background:var(--bg-input);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:9px 11px;border-radius:7px;}
+  .settings-bar input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .btn{background:var(--accent);color:var(--primary);border:none;font-family:var(--font-mono);font-weight:600;font-size:12px;letter-spacing:0.02em;padding:9px 16px;border-radius:100px;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
+  .btn:hover{background:var(--accent-dark);color:#fff;transform:translateY(-1px);}
+  .btn:focus-visible{outline:2px solid var(--accent-dark);outline-offset:2px;}
+  .btn-ghost{background:transparent;border:1px solid var(--border-strong);color:var(--text-sec);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--text);}
+  .btn-danger{background:transparent;border:1px solid var(--rust);color:var(--rust);}
+  .btn-danger:hover{background:var(--rust);color:#fff;}
+  .conn-status{font-family:var(--font-mono);font-size:11px;display:flex;align-items:center;gap:6px;color:var(--text-muted);}
+  .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);}
+  .conn-dot.ok{background:var(--green);}
+  .conn-dot.err{background:var(--rust);}
+  .settings-note{width:100%;font-size:11.5px;color:var(--text-muted);margin-top:2px;}
 
   /* ---- Tabs ---- */
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:28px;overflow-x:auto;}
-  .tab-btn{background:transparent;border:none;color:var(--text-dim);font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.03em;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
-  .tab-btn:hover{color:var(--text-secondary);}
-  .tab-btn.active{color:var(--accent-amber);border-bottom-color:var(--accent-amber);}
-  .tab-btn:focus-visible{outline:2px solid var(--accent-amber);outline-offset:-2px;}
+  .tab-btn{background:transparent;border:none;color:var(--text-muted);font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.03em;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  .tab-btn:hover{color:var(--text-sec);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
 
   .section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
-  .section-num{font-family:var(--font-mono);font-size:12px;color:var(--accent-amber);}
-  h2{font-family:var(--font-display);font-size:18px;font-weight:600;margin:0;}
-  h3{font-family:var(--font-display);font-size:14.5px;font-weight:600;margin:0 0 12px;}
-  .section-sub{color:var(--text-dim);font-size:12.5px;margin:0 0 16px;}
+  .section-num{font-family:var(--font-mono);font-size:12px;color:var(--accent);}
+  h2{font-family:var(--font-head);font-size:18px;font-weight:600;margin:0;}
+  h3{font-family:var(--font-head);font-size:14.5px;font-weight:600;margin:0 0 12px;}
+  .section-sub{color:var(--text-muted);font-size:12.5px;margin:0 0 16px;}
 
   /* ---- Progress curve ---- */
-  .progress-section{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:18px 22px 10px;margin-bottom:26px;}
-  .progress-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;}
-  .progress-count{font-family:var(--font-display);font-size:20px;font-weight:700;}
-  .progress-count span{color:var(--accent-amber);}
+  .progress-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 22px 10px;margin-bottom:26px;}
+  .progress-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;}
+  .progress-count{font-family:var(--font-head);font-size:20px;font-weight:700;}
+  .progress-count span{color:var(--accent);}
   #curveSvg{display:block;width:100%;height:56px;}
-  .progress-markers{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9.5px;color:var(--text-dim);margin-top:2px;padding:0 2px;}
+  .progress-markers{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted);margin-top:2px;padding:0 2px;}
 
   /* ---- Reference cards ---- */
   .label-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
-  .label-chip{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11.5px;background:var(--bg-input);border:1px solid var(--border-light);padding:6px 11px;border-radius:20px;color:var(--text-secondary);}
+  .label-chip{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11.5px;background:var(--bg-input);border:1px solid var(--border-strong);padding:6px 11px;border-radius:20px;color:var(--text-sec);}
   .label-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;}
-  .platform-card{background:var(--bg-panel);padding:15px 16px;}
-  .platform-card .pname{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:8px;}
-  .platform-card .prow{font-size:12px;color:var(--text-secondary);margin-bottom:5px;}
-  .platform-card .prow b{color:var(--text-primary);font-weight:600;}
-  .platform-card .ptag{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-dim);border:1px solid var(--border);padding:1px 6px;border-radius:4px;margin-top:6px;}
-  details.caveat{margin-top:4px;font-size:12.5px;color:var(--text-dim);}
-  details.caveat summary{cursor:pointer;font-family:var(--font-mono);color:var(--text-secondary);font-size:11px;letter-spacing:0.04em;}
+  .platform-card{background:var(--card);padding:15px 16px;}
+  .platform-card .pname{font-family:var(--font-head);font-size:14px;font-weight:600;margin-bottom:8px;}
+  .platform-card .prow{font-size:12px;color:var(--text-sec);margin-bottom:5px;}
+  .platform-card .prow b{color:var(--text);font-weight:600;}
+  .platform-card .ptag{display:inline-block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);padding:1px 6px;border-radius:4px;margin-top:6px;}
+  details.caveat{margin-top:4px;font-size:12.5px;color:var(--text-muted);}
+  details.caveat summary{cursor:pointer;font-family:var(--font-mono);color:var(--text-sec);font-size:11px;letter-spacing:0.04em;}
   details.caveat p{margin:8px 0 0;}
 
   /* ---- Data manager (labels & destinations) ---- */
-  .manager-block{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:22px;}
+  .manager-block{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:22px;}
   table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:16px;}
-  table.data-table th{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border-light);}
+  table.data-table th{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border-strong);}
   table.data-table td{padding:8px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
   table.data-table tr:last-child td{border-bottom:none;}
   .color-swatch{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:6px;}
   .day-checks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
-  .day-check-label{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);background:var(--bg-input);border:1px solid var(--border-light);padding:5px 9px;border-radius:6px;cursor:pointer;}
-  .day-check-label input{accent-color:var(--accent-amber);}
+  .day-check-label{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;color:var(--text-sec);background:var(--bg-input);border:1px solid var(--border-strong);padding:5px 9px;border-radius:6px;cursor:pointer;}
+  .day-check-label input{accent-color:var(--accent);}
   .inline-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end;margin-top:10px;}
   .field{display:flex;flex-direction:column;gap:4px;}
-  .field label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-dim);}
-  .field input[type="text"],.field input[type="number"],.field select{background:var(--bg-input);border:1px solid var(--border-light);color:var(--text-primary);font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:6px;width:100%;}
-  .field input[type="color"]{width:100%;height:36px;background:var(--bg-input);border:1px solid var(--border-light);border-radius:6px;padding:2px;}
-  .field input:focus,.field select:focus{outline:2px solid var(--accent-amber);outline-offset:1px;}
+  .field label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);}
+  .field input[type="text"],.field input[type="number"],.field select{background:var(--bg-input);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:6px;width:100%;}
+  .field input[type="color"]{width:100%;height:36px;background:var(--bg-input);border:1px solid var(--border-strong);border-radius:6px;padding:2px;}
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .row-actions{display:flex;gap:6px;}
-  .icon-btn{background:none;border:1px solid var(--border-light);color:var(--text-dim);cursor:pointer;font-size:12px;padding:4px 8px;border-radius:5px;font-family:var(--font-mono);}
-  .icon-btn:hover{border-color:var(--accent-amber);color:var(--text-primary);}
-  .icon-btn.danger:hover{border-color:var(--accent-red);color:var(--accent-red);}
+  .icon-btn{background:none;border:1px solid var(--border-strong);color:var(--text-muted);cursor:pointer;font-size:12px;padding:4px 8px;border-radius:5px;font-family:var(--font-mono);}
+  .icon-btn:hover{border-color:var(--accent);color:var(--text);}
+  .icon-btn.danger:hover{border-color:var(--rust);color:var(--rust);}
 
   /* ---- Schedule table ---- */
   .schedule-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px;}
   table.schedule{border-collapse:collapse;width:100%;min-width:760px;font-size:12.5px;}
   table.schedule th, table.schedule td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--border);}
-  table.schedule th{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-dim);background:var(--bg-panel-raised);font-weight:500;}
-  table.schedule th:first-child, table.schedule td:first-child{text-align:left;position:sticky;left:0;background:var(--bg-panel);min-width:170px;}
-  table.schedule th:first-child{background:var(--bg-panel-raised);z-index:2;}
+  table.schedule th{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);background:var(--bg-warm);font-weight:500;}
+  table.schedule th:first-child, table.schedule td:first-child{text-align:left;position:sticky;left:0;background:var(--card);min-width:170px;}
+  table.schedule th:first-child{background:var(--bg-warm);z-index:2;}
   table.schedule td:first-child{font-weight:500;z-index:1;}
   table.schedule tr:last-child td{border-bottom:none;}
-  .platform-group-row td{background:var(--bg-panel-raised);font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-amber);text-align:left;padding:6px 10px;position:sticky;left:0;}
-  .cell-label{display:inline-block;min-width:34px;padding:3px 6px;border-radius:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:600;color:#17110D;}
-  .cell-off{color:var(--border-light);font-size:11px;}
+  .platform-group-row td{background:var(--bg-warm);font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);text-align:left;padding:6px 10px;position:sticky;left:0;}
+  .cell-label{display:inline-block;min-width:34px;padding:3px 6px;border-radius:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:600;color:var(--text);}
+  .cell-off{color:var(--border-strong);font-size:11px;}
 
   /* ---- Checklist ---- */
   #addForm{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-  #addForm input[type="text"]{flex:1;min-width:180px;background:var(--bg-input);border:1px solid var(--border-light);color:var(--text-primary);font-family:var(--font-body);font-size:13.5px;padding:10px 12px;border-radius:7px;}
-  #addForm select{background:var(--bg-input);border:1px solid var(--border-light);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;padding:10px 10px;border-radius:7px;}
-  #addForm input:focus,#addForm select:focus{outline:2px solid var(--accent-amber);outline-offset:1px;}
+  #addForm input[type="text"]{flex:1;min-width:180px;background:var(--bg-input);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-body);font-size:13.5px;padding:10px 12px;border-radius:7px;}
+  #addForm select{background:var(--bg-input);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:10px 10px;border-radius:7px;}
+  #addForm input:focus,#addForm select:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .filter-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
-  .filter-tabs button{background:transparent;border:1px solid var(--border-light);color:var(--text-secondary);font-family:var(--font-mono);font-size:11.5px;padding:6px 13px;border-radius:20px;cursor:pointer;}
-  .filter-tabs button.active{background:var(--accent-amber-dim);border-color:var(--accent-amber);color:var(--text-primary);}
+  .filter-tabs button{background:transparent;border:1px solid var(--border-strong);color:var(--text-sec);font-family:var(--font-mono);font-size:11.5px;padding:6px 13px;border-radius:20px;cursor:pointer;}
+  .filter-tabs button.active{background:rgba(184,146,106,0.14);border-color:var(--accent);color:var(--text);}
   #checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
-  .item{display:flex;align-items:flex-start;gap:12px;background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--accent-rust);border-radius:8px;padding:12px 14px;}
-  .item.done{border-left-color:var(--accent-green);}
-  .item.done .item-text{color:var(--text-dim);text-decoration:line-through;}
-  .item-check{appearance:none;-webkit-appearance:none;width:19px;height:19px;border:1.5px solid var(--border-light);border-radius:5px;background:var(--bg-input);cursor:pointer;margin-top:1px;flex-shrink:0;position:relative;}
-  .item-check:checked{background:var(--accent-green);border-color:var(--accent-green);}
-  .item-check:checked::after{content:"✓";position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);color:#17110D;font-size:13px;font-weight:700;}
+  .item{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--rust);border-radius:8px;padding:12px 14px;}
+  .item.done{border-left-color:var(--green);}
+  .item.done .item-text{color:var(--text-muted);text-decoration:line-through;}
+  .item-check{appearance:none;-webkit-appearance:none;width:19px;height:19px;border:1.5px solid var(--border-strong);border-radius:5px;background:var(--bg-input);cursor:pointer;margin-top:1px;flex-shrink:0;position:relative;}
+  .item-check:checked{background:var(--green);border-color:var(--green);}
+  .item-check:checked::after{content:"✓";position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);color:#fff;font-size:13px;font-weight:700;}
   .item-body{flex:1;min-width:0;}
-  .item-text{font-size:14px;color:var(--text-primary);word-break:break-word;}
+  .item-text{font-size:14px;color:var(--text);word-break:break-word;}
   .item-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;}
-  .item-tag{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-dim);background:var(--bg-input);border:1px solid var(--border);padding:2px 7px;border-radius:4px;}
-  .item-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0;}
-  .item-del:hover{color:var(--accent-rust);}
-  .empty-state{text-align:center;padding:28px 20px;color:var(--text-dim);font-size:12.5px;border:1px dashed var(--border-light);border-radius:10px;}
+  .item-tag{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);background:var(--bg-input);border:1px solid var(--border);padding:2px 7px;border-radius:4px;}
+  .item-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0;}
+  .item-del:hover{color:var(--rust);}
+  .empty-state{text-align:center;padding:28px 20px;color:var(--text-muted);font-size:12.5px;border:1px dashed var(--border-strong);border-radius:10px;}
 
   /* ---- KPI ---- */
   #kpiForm{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;align-items:end;}
   #kpiForm .field.wide{grid-column:span 2;}
 
-  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+  /* ---- Baseline reference (dynamic, from sheet) ---- */
+  .baseline-source{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.03em;color:var(--text-muted);margin-top:8px;}
+
+  /* ---- Calendar ---- */
+  .cal-picker{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+  .cal-picker input[type="date"]{background:var(--bg-input);border:1px solid var(--border-strong);color:var(--text);font-family:var(--font-mono);font-size:13px;padding:9px 11px;border-radius:7px;}
+  .cal-picker input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .cal-daylabel{font-family:var(--font-head);font-size:16px;font-weight:600;}
+  .cal-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px;border:1px dashed var(--border-strong);border-radius:10px;}
+
+  .cal-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
+  .cal-card-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+  .cal-card-name{font-family:var(--font-head);font-size:15px;font-weight:600;}
+  .cal-card-group{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);}
+  .cal-reco-row{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;}
+  .cal-reco-item{font-size:12.5px;color:var(--text-sec);}
+  .cal-reco-item b{color:var(--text);display:block;font-size:13.5px;margin-top:2px;}
+  .live-tag{display:inline-block;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;background:var(--green);color:#fff;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
+  .baseline-tag{display:inline-block;font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;background:var(--border-strong);color:var(--text-sec);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
+
+  .cal-add-toggle{background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--font-mono);font-size:11.5px;padding:7px 14px;border-radius:7px;cursor:pointer;}
+  .cal-add-toggle:hover{background:var(--accent);color:var(--primary);}
+  .cal-add-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .cal-add-form.open{display:block;}
+  .cal-add-form input[type="text"],.cal-add-form input[type="time"],.cal-add-form select{
+    width:100%;background:var(--bg-input);border:1px solid var(--border-strong);color:var(--text);
+    font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:6px;
+  }
+  .cal-add-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:8px;}
+
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:11px;color:var(--text-muted);}
 
   @media (max-width:900px){.platform-grid{grid-template-columns:repeat(2,1fr);}}
   @media (max-width:520px){.platform-grid{grid-template-columns:1fr;}}
@@ -163,7 +197,7 @@
   </header>
 
   <div class="settings-bar" id="settingsBar">
-    <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycbzdyVWBpGFLZEToDGsJB1SmLv_JMBmn1Ze-z23UHnf5dS4JWU2EHlL-iNbA8Gq2dec/exec">
+    <input type="text" id="apiUrlInput" placeholder="Paste URL Web App GAS di sini (diakhiri /exec)…">
     <button class="btn" id="connectBtn">Hubungkan &amp; Muat Data</button>
     <span class="conn-status" id="connStatus"><span class="conn-dot" id="connDot"></span><span id="connText">Belum terhubung</span></span>
     <div class="settings-note">Butuh setup Google Apps Script sekali di awal — lihat <code>Code.gs</code> yang saya kirim terpisah untuk instruksinya.</div>
@@ -180,6 +214,7 @@
     <button class="tab-btn active" data-tab="panduan">Panduan</button>
     <button class="tab-btn" data-tab="kelola">Kelola Label &amp; Akun</button>
     <button class="tab-btn" data-tab="jadwal">Jadwal Rotasi</button>
+    <button class="tab-btn" data-tab="kalender">Kalender</button>
     <button class="tab-btn" data-tab="checklist">Checklist</button>
     <button class="tab-btn" data-tab="kpi">KPI</button>
   </nav>
@@ -188,39 +223,14 @@
   <div class="tab-panel active" data-panel="panduan">
     <section>
       <div class="section-head"><span class="section-num">01</span><h2>Panduan Cepat per Platform</h2></div>
-      <p class="section-sub">Jadwal di tab "Jadwal Rotasi" dibangun berdasarkan pola ini.</p>
-      <div class="platform-grid">
-        <div class="platform-card">
-          <div class="pname">Instagram</div>
-          <div class="prow">Hari terbaik: <b>Minggu, Kamis</b></div>
-          <div class="prow">Format terkuat: <b>Carousel</b> (1.22% eng.)</div>
-          <div class="ptag">Sumber: data kompetitor sendiri</div>
-        </div>
-        <div class="platform-card">
-          <div class="pname">TikTok</div>
-          <div class="prow">Hari terbaik: <b>Selasa, Kamis, Sabtu</b></div>
-          <div class="prow">Jam: malam <b>18.00–21.00</b></div>
-          <div class="ptag">Sumber: riset eksternal</div>
-        </div>
-        <div class="platform-card">
-          <div class="pname">Facebook Page</div>
-          <div class="prow">Hari terbaik: <b>Selasa–Kamis</b></div>
-          <div class="prow">Jam: <b>09.00–13.00</b></div>
-          <div class="ptag">Sumber: riset eksternal</div>
-        </div>
-        <div class="platform-card">
-          <div class="pname">FB Marketplace</div>
-          <div class="prow">Hari terbaik: <b>Kamis–Minggu</b> sore/malam</div>
-          <div class="prow">Refresh listing tiap <b>2–3 hari</b></div>
-          <div class="ptag">Sumber: riset eksternal</div>
-        </div>
-      </div>
+      <p class="section-sub">Bukan teks tetap — dibaca langsung dari tab "Baseline" di spreadsheet, dan bergeser ke rekomendasi berbasis KPI kamu sendiri begitu datanya cukup (lihat label hijau "Data Kamu" di tab Kalender).</p>
+      <div class="platform-grid" id="baselineGrid"></div>
       <details class="caveat">
         <summary>Sumber &amp; keterbatasan riset waktu posting</summary>
         <p><b>TikTok:</b> studi-studi besar saling tidak sepakat — titik temu paling konsisten: Selasa &amp; Kamis kuat di hari kerja, Sabtu kuat di akhir pekan, malam umumnya lebih baik dari siang.</p>
         <p><b>Facebook Page:</b> lebih konsisten antar studi — Selasa, Rabu, Kamis unggul. Akhir pekan konsisten paling lemah.</p>
         <p><b>Facebook Marketplace:</b> listing kehilangan visibilitas setelah 48–72 jam, jadi yang penting bukan cuma posting pertama tapi kapan di-<i>refresh</i>.</p>
-        <p>Semua dari riset umum (bukan data akun kamu) — sesuaikan lagi setelah kamu punya data performa asli sendiri (isi di tab KPI).</p>
+        <p>Baris-baris ini bisa diedit langsung di tab "Baseline" pada spreadsheet — nggak perlu ubah kode.</p>
       </details>
     </section>
   </div>
@@ -279,11 +289,24 @@
     </section>
   </div>
 
+  <!-- ===== TAB: KALENDER ===== -->
+  <div class="tab-panel" data-panel="kalender">
+    <section>
+      <div class="section-head"><span class="section-num">05</span><h2>Kalender Posting</h2></div>
+      <p class="section-sub">Pilih tanggal — sistem nunjukkin akun mana yang jadwalnya posting hari itu, label apa (dari rotasi), dan format/jam yang direkomendasikan. Isian di form "Tambah ke Checklist" sudah mengikuti rekomendasi ini, tinggal isi ide kontennya.</p>
+      <div class="cal-picker">
+        <input type="date" id="calDate">
+        <span class="cal-daylabel" id="calDayLabel"></span>
+      </div>
+      <div id="calResults"></div>
+    </section>
+  </div>
+
   <!-- ===== TAB: CHECKLIST ===== -->
   <div class="tab-panel" data-panel="checklist">
     <section>
-      <div class="section-head"><span class="section-num">05</span><h2>Checklist Konten</h2></div>
-      <p class="section-sub">Lacak status konten per destinasi, dari ide sampai tayang.</p>
+      <div class="section-head"><span class="section-num">06</span><h2>Checklist Konten</h2></div>
+      <p class="section-sub">Lacak status konten per destinasi, dari ide sampai tayang. Form di bawah buat tambah cepat tanpa rekomendasi — kalau mau dipandu label/format/jam sesuai jadwal &amp; analisa, pakai tab <b>Kalender</b> (lebih disarankan, biar nggak salah pilih kombinasi).</p>
       <form id="addForm">
         <input type="text" id="itemText" placeholder="Nama/ide konten…" autocomplete="off" required>
         <select id="itemDest"></select>
@@ -302,7 +325,7 @@
   <!-- ===== TAB: KPI ===== -->
   <div class="tab-panel" data-panel="kpi">
     <section>
-      <div class="section-head"><span class="section-num">06</span><h2>KPI per Akun</h2></div>
+      <div class="section-head"><span class="section-num">07</span><h2>KPI per Akun</h2></div>
       <p class="section-sub">Dicatat manual dulu — follower baru, DM, komentar, atau metrik lain per konten/periode. Nanti kalau ada cara integrasi otomatis per platform, form ini tinggal diganti sumbernya, strukturnya tetap sama.</p>
       <div class="manager-block">
         <form id="kpiForm">
@@ -340,8 +363,11 @@
   var WEEK_ORDER = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
   var METRIC_OPTIONS = ["Followers Baru","DM","Komentar","Likes","Share","Reach","Lainnya"];
 
+  var JS_DAY_TO_INDO = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; // Date.getDay(): 0=Minggu
+  var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
+
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [] };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [] };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -386,6 +412,14 @@
     document.getElementById("connText").textContent = text;
   }
 
+  function applyData_(data){
+    state.labels = data.labels || [];
+    state.destinations = data.destinations || [];
+    state.checklist = data.checklist || [];
+    state.kpi = data.kpi || [];
+    state.baseline = data.baseline || [];
+  }
+
   async function connectAndLoad(){
     var url = document.getElementById("apiUrlInput").value.trim();
     if(!url){ setConnStatus("err", "Isi URL Web App dulu"); return; }
@@ -393,10 +427,7 @@
     setConnStatus("", "Menghubungkan…");
     try{
       var data = await apiGetAll();
-      state.labels = data.labels || [];
-      state.destinations = data.destinations || [];
-      state.checklist = data.checklist || [];
-      state.kpi = data.kpi || [];
+      applyData_(data);
       await saveUrl(url);
       setConnStatus("ok", state.labels.length + " label, " + state.destinations.length + " destinasi termuat");
       renderAll();
@@ -556,7 +587,7 @@
   function renderScheduleTable(){
     var table = document.getElementById("scheduleTable");
     if(state.destinations.length === 0){
-      table.innerHTML = '<tr><td style="padding:20px;color:var(--text-dim);">Belum ada destinasi. Tambahkan di tab "Kelola Label & Akun".</td></tr>';
+      table.innerHTML = '<tr><td style="padding:20px;color:var(--text-muted);">Belum ada destinasi. Tambahkan di tab "Kelola Label & Akun".</td></tr>';
       return;
     }
     var html = "<thead><tr><th>Destinasi</th>";
@@ -575,7 +606,7 @@
         if(sched.hasOwnProperty(day)){
           var l = labelById(sched[day]);
           var code = l ? l.name.split(" ").map(function(w){return w[0];}).join("").slice(0,4).toUpperCase() : "?";
-          var color = l ? l.color : "#666";
+          var color = l ? l.color : "#9a9a9a";
           html += '<td><span class="cell-label" style="background:' + color + '">' + code + "</span></td>";
         } else {
           html += '<td><span class="cell-off">–</span></td>';
@@ -586,6 +617,120 @@
     html += "</tbody>";
     table.innerHTML = html;
   }
+
+  /* ---------- Kalender ---------- */
+
+  function dateStrToDayName(dateStr){
+    // "T00:00:00" (tanpa Z) supaya di-parse sebagai waktu LOKAL, bukan UTC --
+    // kalau tidak, tanggal bisa mundur 1 hari di zona waktu negatif UTC.
+    var d = new Date(dateStr + "T00:00:00");
+    return JS_DAY_TO_INDO[d.getDay()];
+  }
+
+  function renderCalendarForDate(dateStr){
+    var results = document.getElementById("calResults");
+    if(!dateStr){ results.innerHTML = ""; document.getElementById("calDayLabel").textContent = ""; return; }
+
+    var dayName = dateStrToDayName(dateStr);
+    document.getElementById("calDayLabel").textContent = dayName;
+
+    if(state.destinations.length === 0){
+      results.innerHTML = '<div class="cal-empty">Belum ada destinasi. Tambahkan dulu di tab "Kelola Label & Akun".</div>';
+      return;
+    }
+
+    var scheduled = state.destinations.filter(function(dest){
+      var sched = computeDestSchedule(dest);
+      return sched.hasOwnProperty(dayName);
+    });
+
+    if(scheduled.length === 0){
+      results.innerHTML = '<div class="cal-empty">Nggak ada akun yang terjadwal posting hari ' + dayName + '. Cek tab "Jadwal Rotasi" buat lihat pola lengkapnya.</div>';
+      return;
+    }
+
+    results.innerHTML = "";
+    scheduled.forEach(function(dest){
+      var sched = computeDestSchedule(dest);
+      var label = labelById(sched[dayName]);
+      var reco = getRecommendation(dest);
+
+      var card = document.createElement("div");
+      card.className = "cal-card";
+
+      var sourceTag = reco.source === "live"
+        ? '<span class="live-tag">Data Kamu (' + reco.sampleSize + ' entri)</span>'
+        : '<span class="baseline-tag">Baseline</span>';
+
+      card.innerHTML =
+        '<div class="cal-card-head">' +
+          '<div><div class="cal-card-name">' + dest.name + '</div><div class="cal-card-group">' + dest.group + '</div></div>' +
+          '<span class="label-chip"><span class="label-dot" style="background:' + (label ? label.color : "#9a9a9a") + '"></span>' + (label ? label.name : "?") + '</span>' +
+        '</div>' +
+        '<div class="cal-reco-row">' +
+          '<div class="cal-reco-item">Format disarankan' + sourceTag + '<b>' + (reco.format || "—") + '</b></div>' +
+          '<div class="cal-reco-item">Jam disarankan<b>' + (reco.time || "—") + '</b></div>' +
+        '</div>' +
+        '<button class="cal-add-toggle">+ Tambah ke Checklist</button>' +
+        '<div class="cal-add-form">' +
+          '<div class="cal-add-grid">' +
+            '<input type="text" class="cal-text" placeholder="Ide/nama konten…">' +
+            '<select class="cal-format">' +
+              (["Carousel","Reel","Image","Video","Listing produk","Foto/Video"].map(function(f){
+                return '<option' + (f === reco.format ? ' selected' : '') + '>' + f + '</option>';
+              }).join("")) +
+            '</select>' +
+            '<input type="time" class="cal-time" value="' + (parseTimeStart_(reco.time) || "") + '">' +
+          '</div>' +
+          '<button class="btn cal-save">Simpan ke Checklist</button>' +
+        '</div>';
+
+      var toggleBtn = card.querySelector(".cal-add-toggle");
+      var form = card.querySelector(".cal-add-form");
+      toggleBtn.addEventListener("click", function(){
+        form.classList.toggle("open");
+        if(form.classList.contains("open")) card.querySelector(".cal-text").focus();
+      });
+
+      card.querySelector(".cal-save").addEventListener("click", async function(){
+        var text = card.querySelector(".cal-text").value.trim();
+        if(!text){ alert("Isi ide/nama konten dulu."); return; }
+        var row = {
+          text: text,
+          dest_id: dest.id,
+          label_id: label ? label.id : "",
+          format: card.querySelector(".cal-format").value,
+          post_date: dateStr,
+          post_time: card.querySelector(".cal-time").value,
+          done: false,
+          created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" })
+        };
+        try{
+          var res = await apiWrite("checklist", "add", { row: row });
+          row.id = res.id;
+          state.checklist.unshift(row);
+          card.querySelector(".cal-text").value = "";
+          form.classList.remove("open");
+          renderChecklist();
+          alert('Tersimpan ke Checklist untuk ' + dest.name + ', ' + dateStr + '.');
+        }catch(err){ alert("Gagal simpan: " + err.message); }
+      });
+
+      results.appendChild(card);
+    });
+  }
+
+  // "18:00-21:00" -> "18:00" (buat isi awal input time). Aman kalau formatnya
+  // beda dari dugaan -- balikin string kosong daripada error.
+  function parseTimeStart_(timeRange){
+    if(!timeRange) return "";
+    var m = String(timeRange).match(/(\d{1,2}):(\d{2})/);
+    return m ? (m[1].padStart(2,"0") + ":" + m[2]) : "";
+  }
+
+  document.getElementById("calDate").addEventListener("change", function(){
+    renderCalendarForDate(this.value);
+  });
 
   /* ---------- Checklist ---------- */
 
@@ -606,6 +751,70 @@
 
   function destName(id){ var d = state.destinations.filter(function(x){return x.id===id;})[0]; return d ? d.name : id; }
   function labelName(id){ var l = labelById(id); return l ? l.name : id; }
+
+  /* ---------- Rekomendasi: live (dari KPI) dengan fallback baseline (dari sheet) ---------- */
+
+  function getBaselineForGroup(group){
+    return state.baseline.filter(function(b){ return b.group === group; })[0] || null;
+  }
+
+  // Cari hari-of-week dengan rata-rata nilai KPI tertinggi untuk 1 destinasi.
+  // Return null kalau data belum cukup (di bawah MIN_KPI_FOR_LIVE) -- di titik
+  // itu caller HARUS jatuh balik ke baseline, bukan nekat nyimpulkan dari
+  // sedikit data.
+  function computeLiveBestDay(destId){
+    var entries = state.kpi.filter(function(k){ return k.dest_id === destId; });
+    if(entries.length < MIN_KPI_FOR_LIVE) return null;
+    var byDay = {};
+    entries.forEach(function(k){
+      var d = new Date(k.timestamp);
+      if(isNaN(d.getTime())) return;
+      var dayName = JS_DAY_TO_INDO[d.getDay()];
+      var val = parseFloat(k.value);
+      if(isNaN(val)) return;
+      byDay[dayName] = byDay[dayName] || { sum:0, count:0 };
+      byDay[dayName].sum += val; byDay[dayName].count += 1;
+    });
+    var bestDay = null, bestAvg = -Infinity;
+    Object.keys(byDay).forEach(function(day){
+      var avg = byDay[day].sum / byDay[day].count;
+      if(avg > bestAvg){ bestAvg = avg; bestDay = day; }
+    });
+    return bestDay ? { day: bestDay, avg: bestAvg, sampleSize: entries.length } : null;
+  }
+
+  // Rekomendasi gabungan untuk 1 destinasi -- coba live dulu, baru baseline.
+  function getRecommendation(dest){
+    var base = getBaselineForGroup(dest.group);
+    var live = computeLiveBestDay(dest.id);
+    return {
+      days: live ? [live.day] : (base ? (base.best_days || "").split(",").filter(Boolean) : []),
+      format: base ? base.best_format : "",
+      time: base ? base.best_time : "",
+      source: live ? "live" : "baseline",
+      sampleSize: live ? live.sampleSize : 0,
+      baseSource: base ? base.source : ""
+    };
+  }
+
+  function renderBaselineGrid(){
+    var el = document.getElementById("baselineGrid");
+    if(state.baseline.length === 0){
+      el.innerHTML = '<div class="cal-empty" style="grid-column:1/-1;">Tab "Baseline" di spreadsheet masih kosong. Jalankan setupSheets lagi, atau isi manual di sheet-nya.</div>';
+      return;
+    }
+    el.innerHTML = "";
+    state.baseline.forEach(function(b){
+      var card = document.createElement("div");
+      card.className = "platform-card";
+      card.innerHTML =
+        '<div class="pname">' + b.group + '</div>' +
+        '<div class="prow">Hari terbaik: <b>' + (b.best_days || "-") + '</b></div>' +
+        '<div class="prow">Format: <b>' + (b.best_format || "-") + '</b>' + (b.best_time ? ' &middot; jam ' + b.best_time : '') + '</div>' +
+        '<div class="baseline-source">' + (b.source || "") + '</div>';
+      el.appendChild(card);
+    });
+  }
 
   function renderChecklist(){
     var list = document.getElementById("checklist");
@@ -647,7 +856,11 @@
       var text = document.createElement("div"); text.className = "item-text"; text.textContent = it.text;
       body.appendChild(text);
       var meta = document.createElement("div"); meta.className = "item-meta";
-      [destName(it.dest_id), labelName(it.label_id), it.created].forEach(function(v){
+      var metaValues = [destName(it.dest_id), labelName(it.label_id)];
+      if(it.format) metaValues.push(it.format);
+      if(it.post_date) metaValues.push(it.post_date + (it.post_time ? " " + it.post_time : ""));
+      metaValues.push(it.created);
+      metaValues.forEach(function(v){
         var tag = document.createElement("span"); tag.className = "item-tag"; tag.textContent = v;
         meta.appendChild(tag);
       });
@@ -718,12 +931,12 @@
     var fillPath = path + " L " + x2 + " " + h + " L 0 " + h + " Z";
     svg.innerHTML =
       '<defs><linearGradient id="curveFill" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#C68A3E" stop-opacity="0.35"/>' +
-      '<stop offset="100%" stop-color="#C68A3E" stop-opacity="0"/></linearGradient></defs>' +
-      '<line x1="0" y1="' + (h-6) + '" x2="' + w + '" y2="' + (h-6) + '" stroke="#3D2E22" stroke-width="1"/>' +
+      '<stop offset="0%" stop-color="#b8926a" stop-opacity="0.35"/>' +
+      '<stop offset="100%" stop-color="#b8926a" stop-opacity="0"/></linearGradient></defs>' +
+      '<line x1="0" y1="' + (h-6) + '" x2="' + w + '" y2="' + (h-6) + '" stroke="#e8e6e1" stroke-width="1"/>' +
       '<path d="' + fillPath + '" fill="url(#curveFill)"/>' +
-      '<path d="' + path + '" fill="none" stroke="#C68A3E" stroke-width="2.5" stroke-linecap="round"/>' +
-      '<circle cx="' + x2 + '" cy="' + y2 + '" r="4.5" fill="#C68A3E"/>';
+      '<path d="' + path + '" fill="none" stroke="#b8926a" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<circle cx="' + x2 + '" cy="' + y2 + '" r="4.5" fill="#b8926a"/>';
   }
 
   /* ---------- KPI ---------- */
@@ -749,7 +962,7 @@
       .sort(function(a,b){ return String(b.timestamp).localeCompare(String(a.timestamp)); });
 
     if(rows.length === 0){
-      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text-dim);text-align:center;padding:18px;">Belum ada data KPI.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text-muted);text-align:center;padding:18px;">Belum ada data KPI.</td></tr>';
       return;
     }
     rows.forEach(function(k){
@@ -761,7 +974,7 @@
         "<td>" + k.metric + "</td>" +
         "<td style=\"font-family:var(--font-mono);\">" + k.value + "</td>" +
         "<td>" + (k.content_ref || "") + "</td>" +
-        "<td style=\"color:var(--text-dim);\">" + (k.notes || "") + "</td>" +
+        "<td style=\"color:var(--text-muted);\">" + (k.notes || "") + "</td>" +
         '<td class="row-actions"></td>';
       var del = document.createElement("button");
       del.className = "icon-btn danger"; del.textContent = "Hapus";
@@ -814,6 +1027,7 @@
   /* ---------- Master render + reload ---------- */
 
   function renderAll(){
+    renderBaselineGrid();
     renderLabelLegend();
     renderLabelsTable();
     renderDestTable();
@@ -822,6 +1036,8 @@
     renderChecklist();
     populateKpiSelectors();
     renderKpiTable();
+    var calDateVal = document.getElementById("calDate").value;
+    if(calDateVal) renderCalendarForDate(calDateVal);
     buildDayCheckboxes("newDestDays", []);
     buildLabelPoolCheckboxes("newDestLabelPool", []);
   }
@@ -830,10 +1046,7 @@
     setConnStatus("", "Memuat ulang…");
     try{
       var data = await apiGetAll();
-      state.labels = data.labels || [];
-      state.destinations = data.destinations || [];
-      state.checklist = data.checklist || [];
-      state.kpi = data.kpi || [];
+      applyData_(data);
       setConnStatus("ok", state.labels.length + " label, " + state.destinations.length + " destinasi termuat");
       renderAll();
     }catch(err){
