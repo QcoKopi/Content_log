@@ -193,6 +193,19 @@
   .report-head-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
   .sample-badge{font-family:var(--font-mono);font-size:11.5px;padding:5px 12px;border-radius:20px;background:var(--bg-warm);color:var(--ink-sec);border:1px solid var(--border-strong);}
   .sample-badge.low{background:#F5E4E1;color:var(--brick);border-color:var(--brick);}
+  .sig-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;background:#EDF1E7;color:var(--moss);padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  table.matrix-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.matrix-table th{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border-strong);}
+  table.matrix-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  table.matrix-table tr:last-child td{border-bottom:none;}
+  table.matrix-table tr:hover td{background:var(--bg-warm);}
+  .matrix-combo-name{font-weight:600;color:var(--ink);}
+  .matrix-eng{font-family:var(--font-mono);font-weight:600;}
+  .matrix-eng-delta{font-size:10.5px;color:var(--moss);display:block;}
+  .matrix-apply-row{display:flex;gap:6px;align-items:center;}
+  .matrix-apply-row select{font-size:11px;padding:5px 7px;border-radius:6px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--ink);max-width:150px;}
+  .matrix-apply-row button{font-size:11px;padding:5px 10px;white-space:nowrap;}
+  .matrix-apply-status{font-size:10.5px;color:var(--moss);margin-top:3px;}
   .report-tables{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   table.report-table{width:100%;border-collapse:collapse;font-size:12.5px;}
   table.report-table th{font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border-strong);}
@@ -353,6 +366,11 @@
       <div class="section-head"><span class="section-num">05</span><h2>Laporan Analisa</h2></div>
       <p class="section-sub">Data mentah di balik tiap rekomendasi — bukan cuma "pemenang" yang dipakai, tapi seluruh urutan lengkap + jumlah sampelnya, biar kamu bisa nilai sendiri. Kalau kamu import ulang CompetitorData atau nambah entri KPI, angka di sini otomatis ikut berubah — jadi kelihatan jelas data baru itu geser analisa yang mana.</p>
 
+      <h3 style="margin-top:6px;">Kombinasi Terbaik — Segmen × Cluster × Area</h3>
+      <p class="section-sub">Semua kombinasi bermakna dari data kompetitor (bukan cuma yang dipakai destinasi kamu sekarang), diranking dari engagement tertinggi. Cuma kombinasi dengan minimal 15 post yang ditampilkan (di bawah itu terlalu sedikit buat dipercaya) — dan yang bertanda <span class="sig-badge">Signifikan</span> berarti engagement-nya 1.5× atau lebih di atas rata-rata seluruh data. Klik "Terapkan" buat pakai kombinasi itu sebagai profil destinasi manapun — Kalender & Panduan-nya otomatis ikut berubah.</p>
+      <div id="kombinasiMatrixContent"></div>
+
+      <h3 style="margin-top:28px;">Telusuri 1 Irisan Spesifik</h3>
       <div class="field" style="max-width:420px;margin-bottom:18px;">
         <label>Pilih irisan data kompetitor</label>
         <select id="laporanSliceSelect"></select>
@@ -1141,6 +1159,109 @@
     return '<table class="report-table"><thead><tr><th>' + colLabel + '</th><th>Avg Eng.</th><th>N</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
+  /* ---------- Matriks Kombinasi Terbaik -- semua irisan segmen x cluster x
+     area yang bermakna, diranking, dengan aksi "Terapkan ke destinasi" yang
+     nulis balik ke profil destinasi (field yang sama dipakai cascade
+     rekomendasi), jadi Kalender & Panduan ikut berubah otomatis. ---------- */
+
+  var SIGNIFICANT_MULTIPLIER = 1.5; // kombinasi "signifikan" = engagement-nya >= 1.5x rata-rata seluruh data
+
+  function computeKombinasiMatrix(){
+    var live = state.instagramBaselineLive;
+    if(!live || !live.byCombo) return [];
+    var globalAvg = live.globalAvgEngagement || 0;
+
+    var list = Object.keys(live.byCombo).map(function(key){
+      var agg = live.byCombo[key];
+      var parts = key.split("|"); // urutan: segmen|cluster|area
+      var picked = pickFromAgg(agg);
+      return {
+        key: key, segmen_ukuran: parts[0], business_cluster: parts[1], area: parts[2],
+        label: parts[1] + " + " + parts[0] + " + " + parts[2],
+        sampleSize: agg.sampleSize, avgEngagement: agg.avgEngagement,
+        isSignificant: globalAvg > 0 && agg.avgEngagement >= globalAvg * SIGNIFICANT_MULTIPLIER,
+        deltaPct: globalAvg > 0 ? ((agg.avgEngagement / globalAvg - 1) * 100) : 0,
+        format: picked ? picked.format : "—", days: picked ? picked.days.join(", ") : "—", time: picked ? picked.time : ""
+      };
+    });
+
+    return list
+      .filter(function(x){ return x.sampleSize >= MIN_SAMPLE_FOR_SLICE; })
+      .sort(function(a, b){ return b.avgEngagement - a.avgEngagement; })
+      .slice(0, 10);
+  }
+
+  function renderKombinasiMatrix(){
+    var content = document.getElementById("kombinasiMatrixContent");
+    if(!state.instagramBaselineLive){
+      content.innerHTML = '<div class="cal-empty">Belum ada data CompetitorData -- import dulu biar matriks ini kehitung.</div>';
+      return;
+    }
+    var matrix = computeKombinasiMatrix();
+    if(matrix.length === 0){
+      content.innerHTML = '<div class="cal-empty">Belum ada kombinasi dengan data cukup (minimal ' + MIN_SAMPLE_FOR_SLICE + ' post).</div>';
+      return;
+    }
+
+    var igDest = state.destinations.filter(function(d){ return d.group === "Instagram"; });
+    var destOptions = igDest.map(function(d){ return '<option value="' + d.id + '">' + d.name + '</option>'; }).join("");
+
+    var rowsHtml = matrix.map(function(m, i){
+      var applyControl = igDest.length
+        ? '<div class="matrix-apply-row">' +
+            '<select class="matrix-apply-select" data-seg="' + m.segmen_ukuran + '" data-clus="' + m.business_cluster + '" data-area="' + m.area + '">' + destOptions + '</select>' +
+            '<button class="btn-ghost matrix-apply-btn" type="button">Terapkan</button>' +
+          '</div><div class="matrix-apply-status"></div>'
+        : '<span style="color:var(--ink-muted);font-size:11px;">Belum ada destinasi Instagram</span>';
+
+      return '<tr>' +
+        '<td><span class="matrix-combo-name">' + (i === 0 ? "🏆 " : "") + m.label + '</span>' + (m.isSignificant ? ' <span class="sig-badge">Signifikan</span>' : '') + '</td>' +
+        '<td><span class="matrix-eng">' + m.avgEngagement.toFixed(2) + '%</span><span class="matrix-eng-delta">' + (m.deltaPct >= 0 ? "+" : "") + m.deltaPct.toFixed(0) + '% vs rata-rata</span></td>' +
+        '<td>' + m.sampleSize + ' post</td>' +
+        '<td>' + m.format + '</td>' +
+        '<td>' + m.days + '</td>' +
+        '<td>' + (m.time || "—") + '</td>' +
+        '<td>' + applyControl + '</td>' +
+      '</tr>';
+    }).join("");
+
+    content.innerHTML =
+      '<div class="report-block" style="overflow-x:auto;">' +
+        '<table class="matrix-table"><thead><tr>' +
+          '<th>Kombinasi</th><th>Engagement</th><th>Sampel</th><th>Format terbaik</th><th>Hari terbaik</th><th>Jam terbaik</th><th>Aksi</th>' +
+        '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
+      '</div>';
+
+    content.querySelectorAll(".matrix-apply-btn").forEach(function(btn){
+      btn.addEventListener("click", async function(){
+        var row = btn.closest("tr");
+        var sel = row.querySelector(".matrix-apply-select");
+        var destId = sel.value;
+        var destName = sel.options[sel.selectedIndex].text;
+        var statusEl = row.querySelector(".matrix-apply-status");
+        btn.disabled = true; btn.textContent = "Menerapkan...";
+        try{
+          await apiWrite("destinations", "update", { id: destId, row: {
+            segmen_ukuran: sel.getAttribute("data-seg"),
+            business_cluster: sel.getAttribute("data-clus"),
+            area: sel.getAttribute("data-area")
+          }});
+          var d = state.destinations.filter(function(x){ return x.id === destId; })[0];
+          if(d){ d.segmen_ukuran = sel.getAttribute("data-seg"); d.business_cluster = sel.getAttribute("data-clus"); d.area = sel.getAttribute("data-area"); }
+          statusEl.textContent = "✓ Diterapkan ke " + destName + " -- Kalender & Panduan sudah update.";
+          renderDestTable(); renderBaselineGrid();
+          var calDateVal = document.getElementById("calDate").value;
+          if(calDateVal) renderCalendarForDate(calDateVal);
+        }catch(err){
+          statusEl.style.color = "var(--brick)";
+          statusEl.textContent = "Gagal: " + err.message;
+        }finally{
+          btn.disabled = false; btn.textContent = "Terapkan";
+        }
+      });
+    });
+  }
+
   function renderLaporanSlice(sliceKey){
     var content = document.getElementById("laporanSliceContent");
     var agg = resolveSlice(sliceKey);
@@ -1529,6 +1650,7 @@
     renderChecklist();
     populateKpiSelectors();
     renderKpiTable();
+    renderKombinasiMatrix();
     populateLaporanSliceSelect();
     renderLaporanKpi();
     renderLaporanResearch();
