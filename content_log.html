@@ -187,6 +187,18 @@
   .cal-daymatch{font-size:11.5px;padding:7px 10px;border-radius:7px;margin-bottom:10px;line-height:1.5;}
   .cal-daymatch-ok{background:#EDF1E7;color:var(--moss);}
   .cal-daymatch-warn{background:#FBF1DD;color:#8A6420;}
+  .review-card{background:var(--card);border:1px solid var(--honey);border-left:3px solid var(--honey);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+  .review-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
+  .review-card-title{font-weight:600;color:var(--ink);font-size:13.5px;}
+  .review-card-meta{font-size:11.5px;color:var(--ink-sec);margin-top:2px;}
+  .review-caption{font-size:12.5px;color:var(--ink-sec);background:var(--bg-warm);border-radius:7px;padding:8px 10px;margin:8px 0;white-space:pre-wrap;}
+  .review-expiry{font-family:var(--font-mono);font-size:10.5px;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .review-expiry-ok{background:var(--bg-warm);color:var(--ink-muted);}
+  .review-expiry-warn{background:#F5E4E1;color:var(--brick);}
+  .review-actions{display:flex;gap:8px;margin-top:10px;}
+  .review-actions .btn{background:var(--moss);color:#fff;}
+  .review-actions .btn:hover{background:#4A6140;}
+  .review-actions .btn-danger{background:transparent;}
 
   /* ---- Laporan Analisa ---- */
   .report-block{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
@@ -308,6 +320,12 @@
 
   <!-- ===== TAB: KALENDER ===== -->
   <div class="tab-panel active" data-panel="kalender">
+    <section id="reviewQueueSection" style="display:none;">
+      <div class="section-head"><span class="section-num">•</span><h2>Menunggu Persetujuan</h2></div>
+      <p class="section-sub">Konten yang udah disiapkan otomatis (media &amp; caption sudah keupload ke Instagram sebagai draft) tapi <b>belum tayang</b> — nunggu kamu cek dulu. Container kadaluarsa 24 jam kalau kelamaan nggak diputuskan.</p>
+      <div id="reviewQueueContent"></div>
+    </section>
+
     <section>
       <div class="section-head"><span class="section-num">01</span><h2>Kalender Posting</h2></div>
       <p class="section-sub">Pilih tanggal — sistem nunjukkin akun mana yang jadwalnya posting hari itu, label apa (dari rotasi), dan format/jam yang direkomendasikan. Isian di form "Tambah ke Checklist" sudah mengikuti rekomendasi ini, tinggal isi ide kontennya.</p>
@@ -414,6 +432,14 @@
       </form>
 
       <div id="laporanResearchContent" style="margin-top:16px;"></div>
+
+      <h3 style="margin-top:28px;">Pertumbuhan Akun IG Sendiri</h3>
+      <p class="section-sub">Data akun kamu sendiri (bukan kompetitor) lewat Instagram Graph API resmi — follower growth &amp; performa per post. Cuma keisi kalau kamu udah setup kredensial &amp; jalankan <code>syncOwnInstagramInsights()</code> dari editor Apps Script (lihat komentar "INSTAGRAM GRAPH API" di Code.gs).</p>
+      <div id="ownInsightsContent"></div>
+
+      <h3 style="margin-top:28px;">Log Auto-Publish</h3>
+      <p class="section-sub">Jejak setiap kali sistem coba publish otomatis dari Checklist — sukses maupun gagal sama-sama dicatat, karena auto-publish jalan tanpa konfirmasi manual per postingan. Cek di sini kalau ada yang perlu ditinjau.</p>
+      <div id="publishLogContent"></div>
     </section>
   </div>
 
@@ -539,7 +565,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], ownInsights: [], publishLog: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -593,6 +619,8 @@
     state.researchLog = data.researchLog || [];
     state.comboLock = data.comboLock || [];
     state.stock = data.stock || [];
+    state.ownInsights = data.ownInsights || [];
+    state.publishLog = data.publishLog || [];
     // null = tab CompetitorData belum diimpor sama sekali; {error:...} = sheet
     // ketemu tapi ada masalah (nama kolom dll) -- pesannya DITAMPILKAN, bukan
     // dibuang, biar ketauan sebabnya persis apa (bukan black box).
@@ -899,6 +927,75 @@
     // kalau tidak, tanggal bisa mundur 1 hari di zona waktu negatif UTC.
     var d = new Date(dateStr + "T00:00:00");
     return JS_DAY_TO_INDO[d.getDay()];
+  }
+
+  /* ---------- Antrian review konten yang disiapkan otomatis (semi-auto) ---------- */
+
+  function renderReviewQueue(){
+    var section = document.getElementById("reviewQueueSection");
+    var content = document.getElementById("reviewQueueContent");
+    var pending = state.checklist.filter(function(it){ return it.review_status === "ready"; });
+
+    if(pending.length === 0){ section.style.display = "none"; return; }
+    section.style.display = "block";
+
+    content.innerHTML = "";
+    pending.forEach(function(it){
+      var dest = state.destinations.filter(function(d){ return d.id === it.dest_id; })[0];
+      var stockItem = state.stock.filter(function(s){ return s.id === it.stock_id; })[0];
+      var ageMs = it.container_created_at ? (new Date().getTime() - new Date(it.container_created_at).getTime()) : 0;
+      var hoursLeft = Math.max(0, 23 - (ageMs / 3600000));
+      var expiryClass = hoursLeft < 3 ? "review-expiry-warn" : "review-expiry-ok";
+      var expiryText = hoursLeft < 1 ? "kadaluarsa < 1 jam lagi!" : ("~" + Math.floor(hoursLeft) + " jam lagi sebelum kadaluarsa");
+
+      var card = document.createElement("div");
+      card.className = "review-card";
+      card.innerHTML =
+        '<div class="review-card-head">' +
+          '<div><div class="review-card-title">' + it.text + '</div>' +
+            '<div class="review-card-meta">' + (dest ? dest.name : it.dest_id) + ' &middot; ' + (it.post_date || "") + ' ' + (it.post_time || "") + ' &middot; ' + (it.format || stockItem ? (it.format || stockItem.type) : "") + '</div></div>' +
+          '<span class="review-expiry ' + expiryClass + '">' + expiryText + '</span>' +
+        '</div>' +
+        (stockItem && stockItem.link ? '<div style="font-size:11.5px;"><a href="' + stockItem.link + '" target="_blank" rel="noopener">Buka media asli (' + stockItem.id + ') buat dicek dulu</a></div>' : '<div style="font-size:11.5px;color:var(--brick);">Stock/media nggak ketemu — hati-hati sebelum approve.</div>') +
+        '<div class="review-caption">' + (it.caption || it.text || "(caption kosong)") + '</div>' +
+        '<div class="review-actions">' +
+          '<button class="btn review-approve-btn">✓ Setujui &amp; Tayangkan</button>' +
+          '<button class="btn-danger review-reject-btn">Tolak</button>' +
+        '</div>' +
+        '<div class="review-status-msg" style="font-size:11px;margin-top:6px;"></div>';
+
+      var statusMsg = card.querySelector(".review-status-msg");
+
+      card.querySelector(".review-approve-btn").addEventListener("click", async function(){
+        if(!confirm('Yakin tayangkan "' + it.text + '" ke ' + (dest ? dest.name : it.dest_id) + ' sekarang? Ini beneran publish ke Instagram, nggak bisa dibatalkan.')) return;
+        var btn = this;
+        btn.disabled = true; btn.textContent = "Menayangkan...";
+        try{
+          var res = await apiWrite("igPublish", "confirm", { checklistId: it.id });
+          statusMsg.style.color = "var(--moss)";
+          statusMsg.textContent = "✓ Berhasil tayang (media ID: " + res.ig_media_id + ").";
+          it.review_status = "published"; it.done = true;
+          setTimeout(function(){ renderReviewQueue(); renderChecklist(); }, 1200);
+        }catch(err){
+          statusMsg.style.color = "var(--brick)";
+          statusMsg.textContent = "Gagal: " + err.message;
+          btn.disabled = false; btn.textContent = "✓ Setujui & Tayangkan";
+        }
+      });
+
+      card.querySelector(".review-reject-btn").addEventListener("click", async function(){
+        if(!confirm('Tolak "' + it.text + '"? Nggak akan disiapkan ulang otomatis.')) return;
+        var btn = this;
+        btn.disabled = true;
+        try{
+          await apiWrite("igPublish", "reject", { checklistId: it.id });
+          it.review_status = "rejected";
+          renderReviewQueue();
+        }catch(err){ alert("Gagal menolak: " + err.message); btn.disabled = false; }
+      });
+
+      content.appendChild(card);
+    });
   }
 
   function renderCalendarForDate(dateStr){
@@ -1769,6 +1866,82 @@
     });
   }
 
+  /* ---------- Data akun IG sendiri (Instagram Graph API resmi) ---------- */
+
+  function renderOwnInsights(){
+    var content = document.getElementById("ownInsightsContent");
+    if(state.ownInsights.length === 0){
+      content.innerHTML = '<div class="cal-empty">Belum ada data. Setup kredensial + jalankan syncOwnInstagramInsights() dulu dari editor Apps Script (lihat Code.gs, bagian "INSTAGRAM GRAPH API").</div>';
+      return;
+    }
+
+    var accountRows = state.ownInsights.filter(function(r){ return r.scope === "account"; })
+      .sort(function(a,b){ return String(a.synced_at).localeCompare(String(b.synced_at)); });
+    var mediaRows = state.ownInsights.filter(function(r){ return r.scope === "media"; })
+      .sort(function(a,b){ return String(b.post_date).localeCompare(String(a.post_date)); });
+    var errorRows = state.ownInsights.filter(function(r){ return r.scope === "account_error" || r.scope === "media_error"; });
+
+    var html = "";
+
+    if(accountRows.length){
+      var growthRows = accountRows.map(function(r, i){
+        var prev = i > 0 ? parseFloat(accountRows[i-1].follower_count_total) : null;
+        var cur = parseFloat(r.follower_count_total);
+        var delta = (prev !== null && !isNaN(cur) && !isNaN(prev)) ? (cur - prev) : null;
+        var deltaStr = delta === null ? "—" : (delta >= 0 ? "+" + delta : String(delta));
+        var dateStr = new Date(r.synced_at).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"});
+        return "<tr><td>" + dateStr + "</td><td>" + (r.follower_count_total || "—") + "</td><td>" + deltaStr + "</td></tr>";
+      }).join("");
+      html += '<div class="report-block"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--ink-sec);">Follower Growth</h4>' +
+        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Followers</th><th>Perubahan</th></tr></thead><tbody>' + growthRows + '</tbody></table></div>';
+    }
+
+    if(mediaRows.length){
+      var postRows = mediaRows.map(function(r){
+        return "<tr><td>" + (r.post_date || "—") + "</td>" +
+          "<td style='max-width:180px;'>" + (r.caption_snippet || "—") + "</td>" +
+          "<td>" + (r.likes || 0) + "</td><td>" + (r.comments || 0) + "</td><td>" + (r.saved || 0) + "</td>" +
+          "<td>" + (r.shares || 0) + "</td><td>" + (r.reach || "—") + "</td><td>" + (r.views || "—") + "</td>" +
+          "<td>" + (r.follows_from_post || "—") + "</td></tr>";
+      }).join("");
+      html += '<div class="report-block" style="overflow-x:auto;"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--ink-sec);">Performa per Post</h4>' +
+        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Likes</th><th>Komentar</th><th>Saved</th><th>Shares</th><th>Reach</th><th>Views</th><th>Follow dari Post</th></tr></thead><tbody>' + postRows + '</tbody></table></div>';
+    }
+
+    if(errorRows.length){
+      html += '<div class="report-block" style="border-left:3px solid var(--brick);"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--brick);">' + errorRows.length + ' sync gagal (klik untuk detail)</h4>' +
+        errorRows.slice(0, 5).map(function(r){ return '<div class="research-notes" style="margin-bottom:6px;">' + (r.caption_snippet || "").slice(0,150) + '</div>'; }).join("") +
+        '</div>';
+    }
+
+    content.innerHTML = html || '<div class="cal-empty">Data ada tapi nggak ada baris yang cocok ditampilkan.</div>';
+  }
+
+  var PUBLISH_STATUS_LABELS = { success: "Sukses (tayang)", failed: "Gagal", skipped_rate_limit: "Dilewati (rate limit)", prepared: "Disiapkan (nunggu review)", rejected: "Ditolak manual" };
+
+  function renderPublishLog(){
+    var content = document.getElementById("publishLogContent");
+    if(state.publishLog.length === 0){
+      content.innerHTML = '<div class="cal-empty">Belum ada percobaan publish. Muncul otomatis begitu prepareScheduledContent() mulai jalan (lewat trigger tiap jam).</div>';
+      return;
+    }
+    var sorted = state.publishLog.slice().sort(function(a,b){ return String(b.attempted_at).localeCompare(String(a.attempted_at)); });
+    var rows = sorted.map(function(r){
+      var item = state.checklist.filter(function(c){ return c.id === r.checklist_id; })[0];
+      var dest = state.destinations.filter(function(d){ return d.id === r.dest_id; })[0];
+      var statusClass = r.status === "success" ? "used-tag-done" : (r.status === "prepared" || r.status === "skipped_rate_limit") ? "used-tag-active" : "";
+      var statusStyle = (r.status === "failed" || r.status === "rejected") ? 'background:#F5E4E1;color:var(--brick);' : "";
+      var dateStr = r.attempted_at ? new Date(r.attempted_at).toLocaleString("id-ID", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "—";
+      return "<tr><td style='font-family:var(--font-mono);font-size:11px;'>" + dateStr + "</td>" +
+        "<td>" + (item ? item.text : (r.checklist_id || "—")) + "</td>" +
+        "<td>" + (dest ? dest.name : (r.dest_id || "—")) + "</td>" +
+        "<td><span class='used-tag " + statusClass + "' style='" + statusStyle + "'>" + (PUBLISH_STATUS_LABELS[r.status] || r.status) + "</span></td>" +
+        "<td style='font-size:11px;color:var(--ink-sec);max-width:220px;'>" + (r.detail || "") + "</td></tr>";
+    }).join("");
+    content.innerHTML = '<div class="report-block" style="overflow-x:auto;">' +
+      '<table class="report-table"><thead><tr><th>Waktu</th><th>Konten</th><th>Destinasi</th><th>Status</th><th>Detail</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
   document.getElementById("researchForm").addEventListener("submit", async function(e){
     e.preventDefault();
     var value = document.getElementById("rfValue").value.trim();
@@ -2009,6 +2182,7 @@
   /* ---------- Master render + reload ---------- */
 
   function renderAll(){
+    renderReviewQueue();
     renderBaselineGrid();
     renderLabelLegend();
     renderLabelsTable();
@@ -2025,6 +2199,8 @@
     populateLaporanSliceSelect();
     renderLaporanKpi();
     renderLaporanResearch();
+    renderOwnInsights();
+    renderPublishLog();
     var calDateVal = document.getElementById("calDate").value;
     if(calDateVal) renderCalendarForDate(calDateVal);
     buildDayCheckboxes("newDestDays", []);
