@@ -302,6 +302,7 @@
           <button class="nav-pill" data-tab="checklist">Checklist</button>
           <button class="nav-pill" data-tab="jadwal">Jadwal Rotasi</button>
           <button class="nav-pill" data-tab="panduan">Panduan</button>
+          <button class="nav-pill" data-tab="panduanposting">Panduan Posting</button>
           <button class="nav-pill" data-tab="laporan">Laporan Analisa</button>
           <button class="nav-pill" data-tab="kelola">Kelola Label &amp; Akun</button>
           <button class="nav-pill" data-tab="kpi">KPI</button>
@@ -388,10 +389,163 @@
     </section>
   </div>
 
+  <!-- ===== TAB: PANDUAN POSTING ===== -->
+  <div class="tab-panel" data-panel="panduanposting">
+    <section>
+      <div class="section-head"><span class="section-num">05</span><h2>Panduan Persiapan Posting</h2></div>
+      <p class="section-sub">Cara siapin semuanya biar auto-publish beneran jalan — mulai dari folder Drive sampai alur lengkap dari checklist ke tayang di Instagram.</p>
+
+      <div class="report-block">
+        <h3 style="margin-top:0;">1. Kenapa Ini Perlu Disiapkan Dulu</h3>
+        <p style="font-size:13px;color:var(--ink-sec);line-height:1.7;">Instagram Content Publishing API butuh <b>link media yang bisa langsung diakses publik</b> (direct-fetchable), bukan link preview biasa. Link Google Drive default (<code>drive.google.com/file/d/.../view</code>) menampilkan halaman preview — Instagram nggak bisa "membaca" gambar/videonya dari link itu. Perlu format URL yang berbeda.</p>
+      </div>
+
+      <div class="report-block">
+        <h3 style="margin-top:0;">2. Struktur Folder Google Drive — Rekomendasi</h3>
+        <p style="font-size:13px;color:var(--ink-sec);">Bikin 1 folder khusus, terpisah dari file kerja lain:</p>
+        <pre style="background:var(--bg-warm);border-radius:8px;padding:12px 16px;font-family:var(--font-mono);font-size:12px;color:var(--ink);overflow-x:auto;">📁 Q.co Content Stock/
+  📁 Carousel/
+  📁 Reel/
+  📁 Image/
+  📁 Arsip - Sudah Tayang/     ← pindahin ke sini setelah dipublish</pre>
+        <p style="font-size:12.5px;color:var(--ink-muted);">Kenapa dipisah per tipe: memudahkan nyari aset pas isi form Stock, dan menghindari 1 folder isinya ratusan file campur aduk.</p>
+      </div>
+
+      <div class="report-block">
+        <h3 style="margin-top:0;">3. Setting Sharing — Wajib Per File</h3>
+        <ol style="font-size:13px;color:var(--ink-sec);line-height:1.9;padding-left:20px;">
+          <li>Klik kanan file di Drive → <b>Share</b></li>
+          <li>Di "General access", ubah dari "Restricted" ke <b>"Anyone with the link"</b></li>
+          <li>Set role ke <b>Viewer</b> (jangan Editor)</li>
+          <li>Klik <b>Copy link</b>, klik <b>Done</b></li>
+        </ol>
+        <div class="cal-daymatch cal-daymatch-warn">⚠️ Ini per file, bukan per folder. Men-share folder tidak otomatis men-share isi filenya kalau file itu diunggah sebelum folder di-share — cek satu-satu, terutama di awal.</div>
+      </div>
+
+      <div class="report-block">
+        <h3 style="margin-top:0;">4. Ubah ke Direct-Link</h3>
+        <p style="font-size:13px;color:var(--ink-sec);">Link biasa dari Drive:</p>
+        <pre style="background:var(--bg-warm);border-radius:8px;padding:10px 14px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);overflow-x:auto;">https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/view?usp=sharing</pre>
+        <p style="font-size:13px;color:var(--ink-sec);">Ambil bagian <b>FILE_ID</b> (rangkaian huruf-angka antara <code>/d/</code> dan <code>/view</code>), susun jadi:</p>
+        <pre style="background:var(--bg-warm);border-radius:8px;padding:10px 14px;font-family:var(--font-mono);font-size:11.5px;color:var(--moss);overflow-x:auto;">https://drive.google.com/uc?export=download&id=FILE_ID</pre>
+        <p style="font-size:12.5px;color:var(--ink-muted);"><b>Ini yang dimasukkan ke kolom "Link Stock"</b> di tab Kelola → Stock Konten — bukan link share biasa. Extension browser "Google Drive Direct Link Generator" bisa bantu convert otomatis kalau Stock-nya banyak.</p>
+      </div>
+
+      <div class="report-block" style="overflow-x:auto;">
+        <h3 style="margin-top:0;">5. Batasan Ukuran &amp; Format</h3>
+        <p style="font-size:12.5px;color:var(--ink-muted);margin-bottom:14px;">Angka di bawah dari dokumentasi resmi Instagram Graph API.</p>
+        <table class="report-table" style="margin-bottom:16px;">
+          <thead><tr><th>Gambar (Image/Carousel)</th><th>Nilai</th></tr></thead>
+          <tbody>
+            <tr><td>Ukuran file maksimal</td><td><b>8 MB</b></td></tr>
+            <tr><td>Rasio aspek</td><td>4:5 sampai 1.91:1 (persegi 1:1 juga boleh)</td></tr>
+            <tr><td>Lebar</td><td>320px – 1440px</td></tr>
+            <tr><td>Format</td><td>JPEG disarankan</td></tr>
+          </tbody>
+        </table>
+        <table class="report-table">
+          <thead><tr><th>Video / Reel</th><th>Nilai</th></tr></thead>
+          <tbody>
+            <tr><td>Container</td><td>MP4 atau MOV</td></tr>
+            <tr><td>Codec</td><td>H.264 / HEVC, audio AAC</td></tr>
+            <tr><td>Rasio aspek Reel</td><td><b>9:16</b> disarankan</td></tr>
+            <tr><td>Durasi buat masuk tab Reels</td><td><b>5–90 detik</b></td></tr>
+            <tr><td>Ukuran file</td><td>Jaga di bawah <b>100MB</b></td></tr>
+          </tbody>
+        </table>
+        <div class="cal-daymatch cal-daymatch-warn" style="margin-top:14px;">⚠️ Drive punya pemindaian virus otomatis untuk file besar — kalau lewat batas tertentu, Drive nampilin konfirmasi "Download anyway" yang butuh manusia mengklik. Sistem otomatis nggak bisa klik itu, jadi fetch-nya gagal diam-diam. Kompres video sebelum upload, jaga di bawah 100MB.</div>
+      </div>
+
+      <div class="report-block">
+        <h3 style="margin-top:0;">6. Alur Lengkap — Dari Ide Sampai Tayang</h3>
+        <ol style="font-size:13px;color:var(--ink-sec);line-height:2;padding-left:20px;">
+          <li><b>Siapkan aset</b> — simpan ke folder Drive sesuai tipe, share "Anyone with link", ambil direct-link</li>
+          <li><b>Catat di Stock</b> (tab Kelola) — nama konten, tipe, label, tempel direct-link. ID otomatis terbentuk</li>
+          <li><b>Jadwalkan di Kalender</b> — pilih destinasi, dari dropdown "Pilih dari Stock" pilih aset — format &amp; caption otomatis terisi</li>
+          <li><b>Sistem menyiapkan otomatis</b> — tiap jam, cek checklist yang jamnya lewat, upload ke Instagram sebagai container (belum tayang)</li>
+          <li><b>Kamu review</b> — tab Kalender, bagian "Menunggu Persetujuan" — cek caption &amp; media asli</li>
+          <li><b>Setujui</b> — klik "Setujui &amp; Tayangkan" → baru di titik ini benar-benar publish</li>
+          <li><b>Tercatat otomatis</b> — hasil masuk ke Publish Log (Laporan Analisa)</li>
+        </ol>
+      </div>
+
+      <div class="report-block">
+        <h3 style="margin-top:0;">7. Sebelum Percaya Penuh — Uji Coba Dulu</h3>
+        <ol style="font-size:13px;color:var(--ink-sec);line-height:1.9;padding-left:20px;">
+          <li>Siapkan 1 gambar yang benar-benar boleh tayang (bukan draft/placeholder)</li>
+          <li>Ikuti alur lengkap di atas end-to-end, jam posting beberapa menit dari sekarang</li>
+          <li>Pastikan mendarat di "Menunggu Persetujuan" dengan caption &amp; gambar yang benar sebelum klik Setujui</li>
+          <li>Setelah Setujui, cek langsung ke Instagram — pastikan yang tayang sesuai harapan</li>
+        </ol>
+      </div>
+
+      <div class="report-block" style="overflow-x:auto;">
+        <h3 style="margin-top:0;">8. Masalah Umum</h3>
+        <table class="report-table">
+          <thead><tr><th>Gejala</th><th>Kemungkinan Sebab</th></tr></thead>
+          <tbody>
+            <tr><td>media_error di Publish Log</td><td>Cek ulang batasan ukuran/rasio di bagian 5</td></tr>
+            <tr><td>Link Stock nggak jalan</td><td>Pastikan sharing "Anyone with the link", bukan "Restricted" — cek per file</td></tr>
+            <tr><td>Nggak muncul di "Menunggu Persetujuan"</td><td>Trigger jalan tiap 1 jam, belum tentu langsung; atau field Stock di checklist kosong</td></tr>
+            <tr><td>Token/insight tiba-tiba error</td><td>Token kadaluarsa 60 hari — cek setupTokenRefreshTrigger() sudah terpasang</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:28px;">Tanya Jawab</h3>
+      <p class="section-sub">Pertanyaan yang biasanya muncul begitu mulai pakai alur ini.</p>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Kenapa harus direct-link, nggak bisa link share Drive biasa?</summary>
+        <p>Link share biasa (<code>/view</code>) mengarah ke halaman PREVIEW Drive (HTML, dengan tombol-tombol dll), bukan file gambarnya langsung. Instagram butuh URL yang begitu diakses langsung mengembalikan BYTES gambar/videonya — itulah yang dilakukan format <code>uc?export=download</code>.</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Bisa pakai layanan selain Google Drive?</summary>
+        <p>Bisa — apa saja yang menghasilkan direct-link publik (Dropbox dengan format serupa, hosting sendiri, CDN, dll) akan berfungsi sama. Drive dipilih di panduan ini karena paling gampang diakses tanpa biaya tambahan, bukan satu-satunya pilihan.</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Kalau saya edit caption di Checklist setelah dijadwalkan, apa otomatis ke-update?</summary>
+        <p>Cuma kalau diedit SEBELUM sistem menyiapkan container (sebelum jam yang dijadwalkan lewat). Begitu container sudah dibuat (masuk status "Menunggu Persetujuan"), caption sudah "terkunci" di dalam container itu — edit di Checklist setelahnya nggak akan berubah di container yang sudah ada.</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Apa bedanya "disiapkan" (prepare) dan "tayang" (publish)? Kenapa dipisah?</summary>
+        <p>"Disiapkan" = media &amp; caption sudah terupload ke Instagram sebagai draft/container, TAPI belum publik. "Tayang" = publish beneran, sudah bisa dilihat orang. Dipisah supaya ada kesempatan review sebelum sesuatu benar-benar tampil di akun publik — sekali tayang, sama seperti post Instagram biasa, nggak ada tombol "batalkan" dari tool ini.</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Kalau saya approve tapi ternyata salah, bisa dibatalkan?</summary>
+        <p>Tidak dari tool ini. Begitu "Setujui &amp; Tayangkan" diklik, itu post Instagram sungguhan — untuk menghapus/edit, harus lewat aplikasi Instagram langsung, seperti post manual lainnya. Ini kenapa langkah 7 (uji coba) di atas penting dilakukan dulu.</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Berapa lama container bertahan sebelum kadaluarsa?</summary>
+        <p>24 jam menurut Meta. Sistem ini pakai 23 jam sebagai batas aman internal — kalau lewat itu tanpa di-approve, otomatis ditandai "expired" dan perlu disiapkan ulang (bukan gagal permanen, cuma perlu proses ulang).</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Boleh pakai hashtag dan emoji di caption?</summary>
+        <p>Boleh, caption diperlakukan sebagai teks biasa oleh API — hashtag, emoji, line break semua ikut tersimpan persis seperti yang ditulis di field caption/text.</p>
+      </details>
+
+      <details class="caveat" style="margin-bottom:10px;">
+        <summary>Kalau file di Stock saya hapus/pindahkan setelah dijadwalkan, apa yang terjadi?</summary>
+        <p>Kalau dihapus SEBELUM sistem sempat menyiapkan container: gagal dengan jelas di Publish Log ("Stock nggak ketemu atau link-nya kosong"), checklist item tetap belum selesai (bisa diperbaiki lalu dicoba lagi). Kalau dihapus SETELAH container terbuat (sudah di "Menunggu Persetujuan"): container yang sudah ada tetap bisa di-approve, karena medianya sudah terupload ke Instagram di titik itu, nggak bergantung lagi ke Drive.</p>
+      </details>
+
+      <details class="caveat">
+        <summary>Kenapa video saya gagal padahal ukurannya kecil?</summary>
+        <p>Ukuran cuma satu dari beberapa syarat — cek juga rasio aspek (harus 9:16 buat Reel) dan codec (H.264/HEVC, kontainer MP4/MOV). Video kecil tapi rasio/codec salah tetap ditolak Instagram di tahap pembuatan container.</p>
+      </details>
+    </section>
+  </div>
+
   <!-- ===== TAB: LAPORAN ANALISA ===== -->
   <div class="tab-panel" data-panel="laporan">
     <section>
-      <div class="section-head"><span class="section-num">05</span><h2>Laporan Analisa</h2></div>
+      <div class="section-head"><span class="section-num">06</span><h2>Laporan Analisa</h2></div>
       <p class="section-sub">Data mentah di balik tiap rekomendasi — bukan cuma "pemenang" yang dipakai, tapi seluruh urutan lengkap + jumlah sampelnya, biar kamu bisa nilai sendiri. Kalau kamu import ulang CompetitorData atau nambah entri KPI, angka di sini otomatis ikut berubah — jadi kelihatan jelas data baru itu geser analisa yang mana.</p>
 
       <h3 style="margin-top:6px;">Kombinasi Terbaik — Segmen × Cluster × Area</h3>
@@ -450,7 +604,7 @@
   <!-- ===== TAB: KELOLA ===== -->
   <div class="tab-panel" data-panel="kelola">
     <section>
-      <div class="section-head"><span class="section-num">06</span><h2>Label Konten</h2></div>
+      <div class="section-head"><span class="section-num">07</span><h2>Label Konten</h2></div>
       <p class="section-sub">Urutan di sini = urutan rotasi. Tambah/edit/hapus langsung berlaku ke Jadwal Rotasi.</p>
       <div class="manager-block">
         <table class="data-table" id="labelsTable"><thead><tr><th>Label</th><th>Warna</th><th></th></tr></thead><tbody></tbody></table>
@@ -464,7 +618,7 @@
     </section>
 
     <section>
-      <div class="section-head"><span class="section-num">07</span><h2>Akun / Destinasi Posting</h2></div>
+      <div class="section-head"><span class="section-num">08</span><h2>Akun / Destinasi Posting</h2></div>
       <p class="section-sub">Atur hari posting, titik mulai rotasi, dan (khusus Marketplace) label mana saja yang boleh dipakai. "Profil" (segmen/cluster/area) opsional tapi disarankan diisi — ini yang bikin rekomendasi Panduan &amp; Kalender dihitung dari kompetitor yang benar-benar sebanding, bukan rata-rata 575 akun campur semua tipe.</p>
       <div class="manager-block">
         <table class="data-table" id="destTable"><thead><tr><th>Nama</th><th>Grup</th><th>Hari</th><th>Profil</th><th>Mulai dari</th><th>Pool label</th><th></th></tr></thead><tbody></tbody></table>
@@ -502,7 +656,7 @@
     </section>
 
     <section>
-      <div class="section-head"><span class="section-num">08</span><h2>Stock Konten</h2></div>
+      <div class="section-head"><span class="section-num">09</span><h2>Stock Konten</h2></div>
       <p class="section-sub">Daftar aset yang sudah jadi (link ke file asli), ditandai tipe &amp; label. ID otomatis dibentuk dari tipe+label+nomor urut (mis. <code>CAR-EDUK-003</code>) — jadi begitu lihat ID-nya aja udah ketahuan itu apa. Begitu ada di sini, item ini bisa dipilih langsung waktu nambah checklist — nggak perlu ketik ulang, formatnya ikut keisi otomatis.</p>
       <div class="manager-block">
         <table class="data-table" id="stockTable"><thead><tr><th>ID</th><th>Nama Konten</th><th>Tipe</th><th>Label</th><th>Link</th><th></th></tr></thead><tbody></tbody></table>
@@ -527,7 +681,7 @@
   <!-- ===== TAB: KPI ===== -->
   <div class="tab-panel" data-panel="kpi">
     <section>
-      <div class="section-head"><span class="section-num">09</span><h2>KPI per Akun</h2></div>
+      <div class="section-head"><span class="section-num">10</span><h2>KPI per Akun</h2></div>
       <p class="section-sub">Dicatat manual dulu — follower baru, DM, komentar, atau metrik lain per konten/periode. Nanti kalau ada cara integrasi otomatis per platform, form ini tinggal diganti sumbernya, strukturnya tetap sama.</p>
       <div class="manager-block">
         <form id="kpiForm">
