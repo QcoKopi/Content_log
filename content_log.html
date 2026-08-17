@@ -398,6 +398,10 @@
       <p class="section-sub">Semua kombinasi bermakna dari data kompetitor (bukan cuma yang dipakai destinasi kamu sekarang), diranking dari engagement tertinggi. Cuma kombinasi dengan minimal 15 post yang ditampilkan (di bawah itu terlalu sedikit buat dipercaya) — dan yang bertanda <span class="sig-badge">Signifikan</span> berarti engagement-nya 1.5× atau lebih di atas rata-rata seluruh data. Klik "Terapkan" buat pakai kombinasi itu sebagai profil destinasi manapun — Kalender & Panduan-nya otomatis ikut berubah.</p>
       <div id="kombinasiMatrixContent"></div>
 
+      <h3 style="margin-top:28px;">Temuan dari Akun IG Kamu Sendiri</h3>
+      <p class="section-sub">Alternatif LAIN di luar data kompetitor — dihitung langsung dari post asli qkopi.co (hasil sync API), bukan simulasi. Begitu cukup post tersync (minimal 5), ini OTOMATIS jadi sumber utama rekomendasi di Kalender untuk destinasi Instagram — nggak perlu tombol "Terapkan", karena ini data akun kamu sendiri, bukan pilihan strategi yang perlu dibandingkan dulu.</p>
+      <div id="ownIgFindingsContent"></div>
+
       <h3 style="margin-top:28px;">Telusuri 1 Irisan Spesifik</h3>
       <div class="field" style="max-width:420px;margin-bottom:18px;">
         <label>Pilih irisan data kompetitor</label>
@@ -406,8 +410,8 @@
 
       <div id="laporanSliceContent"></div>
 
-      <h3 style="margin-top:28px;">KPI Kamu Sendiri — per Destinasi</h3>
-      <p class="section-sub">Rata-rata nilai KPI per hari, dari entri yang sudah kamu catat manual. Ini yang dipakai sistem begitu jumlahnya cukup (≥5 entri) untuk menggantikan rekomendasi dari data kompetitor.</p>
+      <h3 style="margin-top:28px;">KPI Manual — per Destinasi</h3>
+      <p class="section-sub">Rata-rata nilai KPI per hari, dari entri yang kamu catat manual. Untuk destinasi Instagram, ini sekarang jadi CADANGAN saja — "Temuan dari Akun IG Kamu Sendiri" di atas (data asli hasil sync API) lebih diutamakan begitu datanya cukup. Manual entry di sini tetap jadi sumber UTAMA untuk TikTok, Facebook Page, dan Facebook Marketplace, karena platform-platform itu belum ada sync otomatis.</p>
       <div id="laporanKpiContent"></div>
 
       <h3 style="margin-top:28px;">Riset TikTok, Facebook Page &amp; Facebook Marketplace</h3>
@@ -1029,8 +1033,10 @@
       var card = document.createElement("div");
       card.className = "cal-card";
 
-      var sourceTag = reco.source === "live"
-        ? '<span class="live-tag">Data Kamu (' + reco.sampleSize + ' entri)</span>'
+      var sourceTag = reco.source === "own_ig"
+        ? '<span class="live-tag" style="background:var(--moss);">📸 Data IG Asli Kamu (' + reco.sampleSize + ' post)</span>'
+        : reco.source === "live"
+        ? '<span class="live-tag">Data Kamu (' + reco.sampleSize + ' entri manual)</span>'
         : reco.source === "competitor"
         ? '<span class="live-tag" style="background:var(--fjord);">Data Real (' + reco.sampleSize + ' post)</span>'
         : '<span class="baseline-tag">Baseline</span>';
@@ -1315,6 +1321,54 @@
     return null;
   }
 
+  var MIN_OWN_DATA_FOR_LIVE = 5; // ambang minimal post ASLI tersync sebelum "Data Kamu (IG asli)" dipercaya
+  var IG_FORMAT_NAME_MAP = { IMAGE: "Image", VIDEO: "Video", CAROUSEL_ALBUM: "Carousel", REELS: "Reel" };
+
+  // Rekomendasi dari data akun IG ASLI (hasil sync API, bukan catatan manual).
+  // Beda dari computeLiveBestDay: ini juga bisa nyimpulkan FORMAT terbaik
+  // (dari media_type asli), nggak cuma hari -- karena datanya per-post, bukan
+  // cuma angka KPI harian yang diketik manual.
+  function computeOwnIgLiveReco(destId){
+    var posts = state.ownInsights.filter(function(r){ return r.scope === "media"; });
+    if(posts.length < MIN_OWN_DATA_FOR_LIVE) return null;
+
+    function engagementOf(r){
+      return (parseFloat(r.likes)||0) + (parseFloat(r.comments)||0) + (parseFloat(r.saved)||0) + (parseFloat(r.shares)||0);
+    }
+    function pickBest(obj){
+      var bestKey = null, bestAvg = -Infinity;
+      Object.keys(obj).forEach(function(k){
+        var avg = obj[k].sum / obj[k].count;
+        if(avg > bestAvg){ bestAvg = avg; bestKey = k; }
+      });
+      return bestKey ? { key: bestKey, avg: bestAvg, count: obj[bestKey].count } : null;
+    }
+
+    var byDay = {}, byFormat = {};
+    posts.forEach(function(r){
+      var d = new Date(r.post_date + "T00:00:00");
+      var eng = engagementOf(r);
+      if(!isNaN(d.getTime())){
+        var dayName = JS_DAY_TO_INDO[d.getDay()];
+        byDay[dayName] = byDay[dayName] || { sum:0, count:0 };
+        byDay[dayName].sum += eng; byDay[dayName].count++;
+      }
+      if(r.media_type){
+        byFormat[r.media_type] = byFormat[r.media_type] || { sum:0, count:0 };
+        byFormat[r.media_type].sum += eng; byFormat[r.media_type].count++;
+      }
+    });
+
+    var bestDay = pickBest(byDay);
+    var bestFormat = pickBest(byFormat);
+    return {
+      day: bestDay ? bestDay.key : null,
+      format: bestFormat ? (IG_FORMAT_NAME_MAP[bestFormat.key] || bestFormat.key) : null,
+      formatAvg: bestFormat ? bestFormat.avg : 0,
+      sampleSize: posts.length
+    };
+  }
+
   // Cari hari-of-week dengan rata-rata nilai KPI tertinggi untuk 1 destinasi.
   // Return null kalau data belum cukup (di bawah MIN_KPI_FOR_LIVE) -- di titik
   // itu caller HARUS jatuh balik ke baseline, bukan nekat nyimpulkan dari
@@ -1340,21 +1394,33 @@
     return bestDay ? { day: bestDay, avg: bestAvg, sampleSize: entries.length } : null;
   }
 
-  // Rekomendasi gabungan -- 3 tingkat prioritas, dari yang paling relevan:
-  //   1. KPI kamu sendiri buat destinasi ini (paling relevan, akun kamu sendiri)
-  //   2. Data kompetitor REAL 575 akun, di-cascade ke irisan paling spesifik
+  // Rekomendasi gabungan -- 4 tingkat prioritas, dari yang paling relevan:
+  //   1. Data akun IG ASLI kamu sendiri (hasil sync API -- paling akurat,
+  //      bukan hasil ketik manual). Khusus destinasi Instagram.
+  //   2. KPI manual (fallback kalau sync API belum cukup data, atau buat
+  //      platform selain Instagram yang belum ada sync otomatis)
+  //   3. Data kompetitor REAL 575 akun, di-cascade ke irisan paling spesifik
   //      yang datanya cukup (kombinasi > cluster > segmen > area > overall)
-  //   3. Baseline riset eksternal (fallback terakhir, cuma ringkasan/kutipan)
+  //   4. Baseline riset eksternal (fallback terakhir, cuma ringkasan/kutipan)
   function getRecommendation(dest, dateStr){
     var base = getBaselineForGroup(dest.group);
-    var live = computeLiveBestDay(dest.id);
     var competitorReco = dest.group === "Instagram" ? getInstagramCompetitorReco(dest, dateStr) : null;
+    var ownIgReco = dest.group === "Instagram" ? computeOwnIgLiveReco(dest.id) : null;
+    var manualLive = computeLiveBestDay(dest.id);
 
-    if(live){
+    if(ownIgReco && ownIgReco.day){
       return {
-        days: [live.day], format: competitorReco ? competitorReco.format.split(" (")[0] : (base ? base.best_format : ""),
+        days: [ownIgReco.day],
+        format: ownIgReco.format || (competitorReco ? competitorReco.format.split(" (")[0] : (base ? base.best_format : "")),
         time: (competitorReco && competitorReco.time) ? competitorReco.time : (base ? base.best_time : ""),
-        source: "live", sampleSize: live.sampleSize, baseSource: "", basisLabel: ""
+        source: "own_ig", sampleSize: ownIgReco.sampleSize, baseSource: "", basisLabel: ""
+      };
+    }
+    if(manualLive){
+      return {
+        days: [manualLive.day], format: competitorReco ? competitorReco.format.split(" (")[0] : (base ? base.best_format : ""),
+        time: (competitorReco && competitorReco.time) ? competitorReco.time : (base ? base.best_time : ""),
+        source: "live", sampleSize: manualLive.sampleSize, baseSource: "", basisLabel: ""
       };
     }
     if(competitorReco){
@@ -1459,14 +1525,16 @@
     });
   }
 
-  function renderRankTable(rankedArr, colLabel){
+  function renderRankTable(rankedArr, colLabel, valueLabel, suffix){
     if(!rankedArr || rankedArr.length === 0){
       return '<div class="cal-empty">Tidak ada data.</div>';
     }
+    suffix = suffix === undefined ? "%" : suffix;
+    valueLabel = valueLabel || "Avg Eng.";
     var rows = rankedArr.map(function(r, i){
-      return "<tr><td>" + (i === 0 ? "🏆 " : "") + r.key + "</td><td>" + r.avg.toFixed(2) + "%</td><td>" + r.count + "</td></tr>";
+      return "<tr><td>" + (i === 0 ? "🏆 " : "") + r.key + "</td><td>" + r.avg.toFixed(2) + suffix + "</td><td>" + r.count + "</td></tr>";
     }).join("");
-    return '<table class="report-table"><thead><tr><th>' + colLabel + '</th><th>Avg Eng.</th><th>N</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    return '<table class="report-table"><thead><tr><th>' + colLabel + '</th><th>' + valueLabel + '</th><th>N</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   /* ---------- Matriks Kombinasi Terbaik -- semua irisan segmen x cluster x
@@ -1868,6 +1936,52 @@
 
   /* ---------- Data akun IG sendiri (Instagram Graph API resmi) ---------- */
 
+  // Ranking LENGKAP (bukan cuma pemenang) dari data IG asli -- dipakai di
+  // Laporan Analisa buat transparansi penuh, konsisten sama gaya Kombinasi Matrix.
+  function renderOwnIgFindings(){
+    var content = document.getElementById("ownIgFindingsContent");
+    var posts = state.ownInsights.filter(function(r){ return r.scope === "media"; });
+
+    if(posts.length < MIN_OWN_DATA_FOR_LIVE){
+      content.innerHTML = '<div class="cal-empty">Baru ' + posts.length + ' post tersync (minimal ' + MIN_OWN_DATA_FOR_LIVE + ' buat mulai dipercaya). Jalankan syncOwnInstagramInsights lagi nanti setelah lebih banyak post ke-sync, atau ini akan otomatis lengkap seiring waktu.</div>';
+      return;
+    }
+
+    function engagementOf(r){
+      return (parseFloat(r.likes)||0) + (parseFloat(r.comments)||0) + (parseFloat(r.saved)||0) + (parseFloat(r.shares)||0);
+    }
+    function rank(obj){
+      return Object.keys(obj).map(function(k){ return { key:k, avg: obj[k].sum/obj[k].count, count: obj[k].count }; })
+        .sort(function(a,b){ return b.avg - a.avg; });
+    }
+
+    var byDay = {}, byFormat = {};
+    posts.forEach(function(r){
+      var eng = engagementOf(r);
+      var d = new Date(r.post_date + "T00:00:00");
+      if(!isNaN(d.getTime())){
+        var dayName = JS_DAY_TO_INDO[d.getDay()];
+        byDay[dayName] = byDay[dayName] || { sum:0, count:0 };
+        byDay[dayName].sum += eng; byDay[dayName].count++;
+      }
+      var fmtName = IG_FORMAT_NAME_MAP[r.media_type] || r.media_type;
+      if(fmtName){
+        byFormat[fmtName] = byFormat[fmtName] || { sum:0, count:0 };
+        byFormat[fmtName].sum += eng; byFormat[fmtName].count++;
+      }
+    });
+
+    content.innerHTML =
+      '<div class="report-block">' +
+        '<div class="report-head-row"><h3 style="margin:0;">qkopi.co — Data Real</h3><span class="sample-badge">' + posts.length + ' post tersync</span></div>' +
+        '<div class="report-tables">' +
+          '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Format (total engagement/post — likes+komentar+saved+share)</h4>' + renderRankTable(rank(byFormat), "Format", "Avg Eng.", "") + '</div>' +
+          '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Hari Posting</h4>' + renderRankTable(rank(byDay), "Hari", "Avg Eng.", "") + '</div>' +
+        '</div>' +
+        '<div class="used-by-row">Status: <b style="color:var(--moss);">✓ Aktif sebagai sumber utama</b> untuk semua destinasi Instagram (lihat tag "📸 Data IG Asli Kamu" di Kalender).</div>' +
+      '</div>';
+  }
+
   function renderOwnInsights(){
     var content = document.getElementById("ownInsightsContent");
     if(state.ownInsights.length === 0){
@@ -2196,6 +2310,7 @@
     populateKpiSelectors();
     renderKpiTable();
     renderKombinasiMatrix();
+    renderOwnIgFindings();
     populateLaporanSliceSelect();
     renderLaporanKpi();
     renderLaporanResearch();
