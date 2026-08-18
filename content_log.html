@@ -298,14 +298,13 @@
       <div class="navrail-scroll">
         <nav class="nav-rail" id="tabs">
           <div class="nav-pill-indicator" id="navIndicator"></div>
-          <button class="nav-pill active" data-tab="kalender">Kalender</button>
-          <button class="nav-pill" data-tab="checklist">Checklist</button>
-          <button class="nav-pill" data-tab="jadwal">Jadwal Rotasi</button>
-          <button class="nav-pill" data-tab="panduan">Panduan</button>
-          <button class="nav-pill" data-tab="panduanposting">Panduan Posting</button>
-          <button class="nav-pill" data-tab="laporan">Laporan Analisa</button>
           <button class="nav-pill" data-tab="kelola">Kelola Label &amp; Akun</button>
+          <button class="nav-pill active" data-tab="kalender">Kalender</button>
+          <button class="nav-pill" data-tab="jadwal">Jadwal Rotasi</button>
+          <button class="nav-pill" data-tab="checklist">Checklist</button>
+          <button class="nav-pill" data-tab="laporan">Laporan Analisa</button>
           <button class="nav-pill" data-tab="kpi">KPI</button>
+          <button class="nav-pill" data-tab="panduanposting">Panduan Posting</button>
         </nav>
       </div>
     </div>
@@ -328,7 +327,7 @@
     </section>
 
     <section>
-      <div class="section-head"><span class="section-num">01</span><h2>Kalender Posting</h2></div>
+      <div class="section-head"><span class="section-num">04</span><h2>Kalender Posting</h2></div>
       <p class="section-sub">Pilih tanggal — sistem nunjukkin akun mana yang jadwalnya posting hari itu, label apa (dari rotasi), dan format/jam yang direkomendasikan. Isian di form "Tambah ke Checklist" sudah mengikuti rekomendasi ini, tinggal isi ide kontennya.</p>
       <div class="cal-picker">
         <input type="date" id="calDate">
@@ -341,7 +340,7 @@
   <!-- ===== TAB: CHECKLIST ===== -->
   <div class="tab-panel" data-panel="checklist">
     <section>
-      <div class="section-head"><span class="section-num">02</span><h2>Checklist Konten</h2></div>
+      <div class="section-head"><span class="section-num">06</span><h2>Checklist Konten</h2></div>
       <p class="section-sub">Lacak status konten per destinasi, dari ide sampai tayang. Form di bawah buat tambah cepat tanpa rekomendasi — kalau mau dipandu label/format/jam sesuai jadwal &amp; analisa, pakai tab <b>Kalender</b> (lebih disarankan, biar nggak salah pilih kombinasi).</p>
       <form id="addForm">
         <select id="itemStockPicker" style="max-width:220px;"><option value="">— Pilih dari Stock (opsional) —</option></select>
@@ -360,13 +359,17 @@
         <button data-filter="done">Selesai</button>
       </div>
       <ul id="checklist"></ul>
+
+      <h3 style="margin-top:28px;">Log Auto-Publish</h3>
+      <p class="section-sub">Jejak setiap kali sistem coba publish otomatis dari checklist di atas — sukses maupun gagal sama-sama dicatat, karena auto-publish jalan tanpa konfirmasi manual per postingan. Item yang checkbox-nya masih kosong berarti belum disetujui/tayang — cek "Menunggu Persetujuan" di tab Kalender.</p>
+      <div id="publishLogContent"></div>
     </section>
   </div>
 
   <!-- ===== TAB: JADWAL ===== -->
   <div class="tab-panel" data-panel="jadwal">
     <section>
-      <div class="section-head"><span class="section-num">03</span><h2>Jadwal Rotasi Label</h2></div>
+      <div class="section-head"><span class="section-num">05</span><h2>Jadwal Rotasi Label</h2></div>
       <p class="section-sub">Dihitung otomatis dari data Label &amp; Destinasi. Kalau destinasi ber-rotasi-penuh lebih banyak dari jumlah label, sesekali ada yang bertepatan di hari yang sama — itu wajar secara matematis, bukan bug.</p>
       <div class="label-legend" id="labelLegend"></div>
       <div class="schedule-scroll"><table class="schedule" id="scheduleTable"></table></div>
@@ -374,25 +377,10 @@
   </div>
 
   <!-- ===== TAB: PANDUAN ===== -->
-  <div class="tab-panel" data-panel="panduan">
-    <section>
-      <div class="section-head"><span class="section-num">04</span><h2>Panduan Cepat per Platform</h2></div>
-      <p class="section-sub">Tiga tingkat sumber, otomatis pakai yang paling relevan: <b>Data Kamu</b> (KPI akun kamu sendiri) &gt; <b>Data Real</b> (dihitung dari 575 akun kompetitor — kalau destinasi diisi segmen/cluster/kota di tab Kelola, otomatis dipersempit ke irisan yang sebanding, mis. "Roastery + Besar + DKI Jakarta", bukan rata-rata semua tipe akun campur) &gt; <b>Baseline</b> (kutipan riset eksternal, cuma untuk platform yang belum kita punya data aslinya). Kartu di bawah ini ringkasan umum (semua akun) — rekomendasi per-destinasi yang sudah dipersempit ada di tab Kalender, dengan keterangan "Berdasarkan: ..." di tiap kartu.</p>
-      <div class="platform-grid" id="baselineGrid"></div>
-      <details class="caveat">
-        <summary>Sumber &amp; keterbatasan riset waktu posting</summary>
-        <p><b>TikTok:</b> studi-studi besar saling tidak sepakat — titik temu paling konsisten: Selasa &amp; Kamis kuat di hari kerja, Sabtu kuat di akhir pekan, malam umumnya lebih baik dari siang.</p>
-        <p><b>Facebook Page:</b> lebih konsisten antar studi — Selasa, Rabu, Kamis unggul. Akhir pekan konsisten paling lemah.</p>
-        <p><b>Facebook Marketplace:</b> listing kehilangan visibilitas setelah 48–72 jam, jadi yang penting bukan cuma posting pertama tapi kapan di-<i>refresh</i>.</p>
-        <p>Baris-baris ini bisa diedit langsung di tab "Baseline" pada spreadsheet — nggak perlu ubah kode.</p>
-      </details>
-    </section>
-  </div>
-
   <!-- ===== TAB: PANDUAN POSTING ===== -->
   <div class="tab-panel" data-panel="panduanposting">
     <section>
-      <div class="section-head"><span class="section-num">05</span><h2>Panduan Persiapan Posting</h2></div>
+      <div class="section-head"><span class="section-num">09</span><h2>Panduan Persiapan Posting</h2></div>
       <p class="section-sub">Cara siapin semuanya biar auto-publish beneran jalan — mulai dari folder Drive sampai alur lengkap dari checklist ke tayang di Instagram.</p>
 
       <div class="report-block">
@@ -545,11 +533,22 @@
   <!-- ===== TAB: LAPORAN ANALISA ===== -->
   <div class="tab-panel" data-panel="laporan">
     <section>
-      <div class="section-head"><span class="section-num">06</span><h2>Laporan Analisa</h2></div>
+      <div class="section-head"><span class="section-num">07</span><h2>Laporan Analisa</h2></div>
       <p class="section-sub">Data mentah di balik tiap rekomendasi — bukan cuma "pemenang" yang dipakai, tapi seluruh urutan lengkap + jumlah sampelnya, biar kamu bisa nilai sendiri. Kalau kamu import ulang CompetitorData atau nambah entri KPI, angka di sini otomatis ikut berubah — jadi kelihatan jelas data baru itu geser analisa yang mana.</p>
 
-      <h3 style="margin-top:6px;">Kombinasi Terbaik — Segmen × Cluster × Area</h3>
-      <p class="section-sub">Semua kombinasi bermakna dari data kompetitor (bukan cuma yang dipakai destinasi kamu sekarang), diranking dari engagement tertinggi. Cuma kombinasi dengan minimal 15 post yang ditampilkan (di bawah itu terlalu sedikit buat dipercaya) — dan yang bertanda <span class="sig-badge">Signifikan</span> berarti engagement-nya 1.5× atau lebih di atas rata-rata seluruh data. Klik "Terapkan" buat pakai kombinasi itu sebagai profil destinasi manapun — Kalender & Panduan-nya otomatis ikut berubah.</p>
+      <h3 style="margin-top:6px;">Panduan Cepat per Platform</h3>
+      <p class="section-sub">Tiga tingkat sumber, otomatis pakai yang paling relevan: <b>Data Kamu</b> (IG asli/KPI akun kamu sendiri) &gt; <b>Data Real</b> (dihitung dari 575 akun kompetitor — kalau destinasi diisi segmen/cluster/kota di tab Kelola, otomatis dipersempit ke irisan yang sebanding) &gt; <b>Baseline</b> (kutipan riset eksternal, cuma untuk platform yang belum kita punya data aslinya). Kartu di bawah ringkasan umum (semua akun) — rekomendasi per-destinasi yang sudah dipersempit ada di tab Kalender, dengan keterangan "Berdasarkan: ..." di tiap kartu.</p>
+      <div class="platform-grid" id="baselineGrid"></div>
+      <details class="caveat">
+        <summary>Sumber &amp; keterbatasan riset waktu posting</summary>
+        <p><b>TikTok:</b> studi-studi besar saling tidak sepakat — titik temu paling konsisten: Selasa &amp; Kamis kuat di hari kerja, Sabtu kuat di akhir pekan, malam umumnya lebih baik dari siang.</p>
+        <p><b>Facebook Page:</b> lebih konsisten antar studi — Selasa, Rabu, Kamis unggul. Akhir pekan konsisten paling lemah.</p>
+        <p><b>Facebook Marketplace:</b> listing kehilangan visibilitas setelah 48–72 jam, jadi yang penting bukan cuma posting pertama tapi kapan di-<i>refresh</i>.</p>
+        <p>Baris-baris ini bisa diedit langsung di tab "Baseline" pada spreadsheet — nggak perlu ubah kode.</p>
+      </details>
+
+      <h3 style="margin-top:28px;">Kombinasi Terbaik — Segmen × Cluster × Area</h3>
+      <p class="section-sub">Semua kombinasi bermakna dari data kompetitor (bukan cuma yang dipakai destinasi kamu sekarang), diranking dari engagement tertinggi. Cuma kombinasi dengan minimal 15 post yang ditampilkan (di bawah itu terlalu sedikit buat dipercaya) — dan yang bertanda <span class="sig-badge">Signifikan</span> berarti engagement-nya 1.5× atau lebih di atas rata-rata seluruh data. Klik "Terapkan" buat pakai kombinasi itu sebagai profil destinasi manapun — Kalender otomatis ikut berubah.</p>
       <div id="kombinasiMatrixContent"></div>
 
       <h3 style="margin-top:28px;">Temuan dari Akun IG Kamu Sendiri</h3>
@@ -598,17 +597,13 @@
       <h3 style="margin-top:28px;">Aktivitas DM</h3>
       <p class="section-sub">⚠️ Ini <b>bukan</b> "postingan X menghasilkan Y DM" — atribusi per-post untuk DM genuinely nggak tersedia lewat API manapun (sudah dicek, termasuk Meta Ads). Ini jejak WAKTU pesan masuk (hari &amp; jam) — bandingkan manual sama tabel "Hari Posting" di atas buat lihat kemungkinan hubungan sendiri. Perlu <code>syncDmActivity()</code> dijalankan dulu.</p>
       <div id="dmActivityContent"></div>
-
-      <h3 style="margin-top:28px;">Log Auto-Publish</h3>
-      <p class="section-sub">Jejak setiap kali sistem coba publish otomatis dari Checklist — sukses maupun gagal sama-sama dicatat, karena auto-publish jalan tanpa konfirmasi manual per postingan. Cek di sini kalau ada yang perlu ditinjau.</p>
-      <div id="publishLogContent"></div>
     </section>
   </div>
 
   <!-- ===== TAB: KELOLA ===== -->
   <div class="tab-panel" data-panel="kelola">
     <section>
-      <div class="section-head"><span class="section-num">07</span><h2>Label Konten</h2></div>
+      <div class="section-head"><span class="section-num">01</span><h2>Label Konten</h2></div>
       <p class="section-sub">Urutan di sini = urutan rotasi. Tambah/edit/hapus langsung berlaku ke Jadwal Rotasi.</p>
       <div class="manager-block">
         <table class="data-table" id="labelsTable"><thead><tr><th>Label</th><th>Warna</th><th></th></tr></thead><tbody></tbody></table>
@@ -622,7 +617,7 @@
     </section>
 
     <section>
-      <div class="section-head"><span class="section-num">08</span><h2>Akun / Destinasi Posting</h2></div>
+      <div class="section-head"><span class="section-num">02</span><h2>Akun / Destinasi Posting</h2></div>
       <p class="section-sub">Atur hari posting, titik mulai rotasi, dan (khusus Marketplace) label mana saja yang boleh dipakai. "Profil" (segmen/cluster/area) opsional tapi disarankan diisi — ini yang bikin rekomendasi Panduan &amp; Kalender dihitung dari kompetitor yang benar-benar sebanding, bukan rata-rata 575 akun campur semua tipe.</p>
       <div class="manager-block">
         <table class="data-table" id="destTable"><thead><tr><th>Nama</th><th>Grup</th><th>Hari</th><th>Profil</th><th>Mulai dari</th><th>Pool label</th><th></th></tr></thead><tbody></tbody></table>
@@ -660,7 +655,7 @@
     </section>
 
     <section>
-      <div class="section-head"><span class="section-num">09</span><h2>Stock Konten</h2></div>
+      <div class="section-head"><span class="section-num">03</span><h2>Stock Konten</h2></div>
       <p class="section-sub">Daftar aset yang sudah jadi (link ke file asli), ditandai tipe &amp; label. ID otomatis dibentuk dari tipe+label+nomor urut (mis. <code>CAR-EDUK-003</code>) — jadi begitu lihat ID-nya aja udah ketahuan itu apa. Begitu ada di sini, item ini bisa dipilih langsung waktu nambah checklist — nggak perlu ketik ulang, formatnya ikut keisi otomatis.</p>
       <div class="manager-block">
         <table class="data-table" id="stockTable"><thead><tr><th>ID</th><th>Nama Konten</th><th>Tipe</th><th>Label</th><th>Link</th><th></th></tr></thead><tbody></tbody></table>
@@ -685,7 +680,7 @@
   <!-- ===== TAB: KPI ===== -->
   <div class="tab-panel" data-panel="kpi">
     <section>
-      <div class="section-head"><span class="section-num">10</span><h2>KPI per Akun</h2></div>
+      <div class="section-head"><span class="section-num">08</span><h2>KPI per Akun</h2></div>
       <p class="section-sub">Dicatat manual dulu — follower baru, DM, komentar, atau metrik lain per konten/periode. Nanti kalau ada cara integrasi otomatis per platform, form ini tinggal diganti sumbernya, strukturnya tetap sama.</p>
       <div class="manager-block">
         <form id="kpiForm">
@@ -2190,12 +2185,12 @@
           "<td><b>" + r.follows_from_post + "</b></td></tr>";
       }).join("");
       var noAttribCount = mediaRowsForFollows.length - mediaWithFollows.length;
-      html += '<div class="report-block" style="overflow-x:auto;"><h4 style="font-size:12.5px;margin:0 0 6px;color:var(--ink-sec);">Follower Baru per Post (atribusi dari Meta)</h4>' +
-        '<p style="font-size:11px;color:var(--ink-muted);margin:0 0 10px;">' + mediaWithFollows.length + ' dari ' + mediaRowsForFollows.length + ' post punya data atribusi' + (noAttribCount>0 ? ' (' + noAttribCount + ' lainnya belum ada datanya)' : '') + '. Angka ini TIDAK bakal pas sama persis sama tabel "Follower Growth" di atas — itu net (termasuk unfollow), ini cuma follow yang Meta atribusikan ke post spesifik.</p>' +
+      html += '<div class="report-block" style="overflow-x:auto;"><h4 style="font-size:12.5px;margin:0 0 6px;color:var(--ink-sec);">Follower Baru per Post (atribusi dari Meta — khusus Reel)</h4>' +
+        '<p style="font-size:11px;color:var(--ink-muted);margin:0 0 10px;">' + mediaWithFollows.length + ' dari ' + mediaRowsForFollows.length + ' post punya data atribusi' + (noAttribCount>0 ? ' (' + noAttribCount + ' lainnya Image/Carousel/Video biasa — metrik ini confirmed cuma didukung Meta buat Reel)' : '') + '. Angka ini TIDAK bakal pas sama persis sama tabel "Follower Growth" di atas — itu net (termasuk unfollow), ini cuma follow yang Meta atribusikan ke post spesifik.</p>' +
         '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Format</th><th>Follower Baru</th></tr></thead><tbody>' + followRows + '</tbody></table></div>';
     } else if(mediaRowsForFollows.length > 0){
       html += '<div class="report-block" style="border-left:3px solid var(--honey);"><h4 style="font-size:12.5px;margin:0 0 6px;color:var(--ink-sec);">Follower Baru per Post</h4>' +
-        '<p style="font-size:12px;color:var(--ink-sec);">Belum ada satu post pun yang punya data atribusi follow. Kemungkinan: (1) akun di bawah 100 follower — ini syarat minimal Meta buat metrik ini, (2) belum sync ulang sejak perbaikan terakhir — jalankan <code>syncOwnInstagramInsights</code> lagi, atau (3) ada error asli — cek Execution Log di Apps Script, cari baris "Metrik follows gagal".</p></div>';
+        '<p style="font-size:12px;color:var(--ink-sec);">Belum ada data. <b>Confirmed dari Meta sendiri</b> (bukan dugaan): metrik ini cuma didukung untuk post tipe <b>Reel</b> — Image/Carousel/Video biasa akan selalu kosong di sini, itu bukan error. Kalau kamu udah punya Reel yang tersync tapi masih kosong juga, cek Execution Log di Apps Script buat baris "Metrik follows gagal buat media ... (REELS)" — itu baru pertanda ada masalah asli.</p></div>';
     }
 
     if(mediaRows.length){
@@ -2208,9 +2203,9 @@
           "<td>" + (r.follows_from_post || "—") + "</td>" +
           "<td style='text-align:center;'><input type='checkbox' class='own-post-ad-checkbox' data-row-id='" + r.id + "' " + isAdChecked + "></td></tr>";
       }).join("");
-      html += '<div class="report-block" style="overflow-x:auto;"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--ink-sec);">Performa per Post</h4>' +
-        '<p style="font-size:11px;color:var(--ink-muted);margin:0 0 10px;">Centang "Ad?" kalau post ini pernah di-boost/diiklankan — post yang ditandai otomatis DIKECUALIKAN dari perhitungan "hari/format terbaik" di atas, biar nggak nyampur performa organik sama yang dibayar.</p>' +
-        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Likes</th><th>Komentar</th><th>Saved</th><th>Shares</th><th>Reach</th><th>Views</th><th>Follow dari Post</th><th>Ad?</th></tr></thead><tbody>' + postRows + '</tbody></table></div>';
+      html += '<details class="report-block" style="overflow-x:auto;"><summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-sec);">Performa per Post (klik buat buka — ' + mediaRows.length + ' post)</summary>' +
+        '<p style="font-size:11px;color:var(--ink-muted);margin:10px 0 10px;">Centang "Ad?" kalau post ini pernah di-boost/diiklankan — post yang ditandai otomatis DIKECUALIKAN dari perhitungan "hari/format terbaik" di atas, biar nggak nyampur performa organik sama yang dibayar.</p>' +
+        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Likes</th><th>Komentar</th><th>Saved</th><th>Shares</th><th>Reach</th><th>Views</th><th>Follow dari Post</th><th>Ad?</th></tr></thead><tbody>' + postRows + '</tbody></table></details>';
     }
 
     if(errorRows.length){
