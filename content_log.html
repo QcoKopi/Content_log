@@ -594,8 +594,12 @@
       <p class="section-sub">Data akun kamu sendiri (bukan kompetitor) lewat Instagram Graph API resmi — follower growth &amp; performa per post. Cuma keisi kalau kamu udah setup kredensial &amp; jalankan <code>syncOwnInstagramInsights()</code> dari editor Apps Script (lihat komentar "INSTAGRAM GRAPH API" di Code.gs).</p>
       <div id="ownInsightsContent"></div>
 
+      <h3 style="margin-top:28px;">Facebook Page — Data Real</h3>
+      <p class="section-sub">Data Page kamu sendiri lewat Facebook Graph API resmi — pertumbuhan fans &amp; performa per post. Perlu <code>syncFbPageInsights()</code> dijalankan dulu (setelah kredensial IG di-setup, pageId-nya udah ikut kesimpan otomatis).</p>
+      <div id="fbPageInsightsContent"></div>
+
       <h3 style="margin-top:28px;">Aktivitas DM</h3>
-      <p class="section-sub">⚠️ Ini <b>bukan</b> "postingan X menghasilkan Y DM" — atribusi per-post untuk DM genuinely nggak tersedia lewat API manapun (sudah dicek, termasuk Meta Ads). Ini jejak WAKTU pesan masuk (hari &amp; jam) — bandingkan manual sama tabel "Hari Posting" di atas buat lihat kemungkinan hubungan sendiri. Perlu <code>syncDmActivity()</code> dijalankan dulu.</p>
+      <p class="section-sub">⚠️ Ini <b>bukan</b> "postingan X menghasilkan Y DM" — atribusi per-post untuk DM genuinely nggak tersedia lewat API manapun (sudah dicek, termasuk Meta Ads). Ini jejak WAKTU pesan masuk (hari &amp; jam), gabungan Instagram DM + Facebook Messenger — bandingkan manual sama tabel "Hari Posting" di atas buat lihat kemungkinan hubungan sendiri. Perlu <code>syncDmActivity()</code> dijalankan dulu.</p>
       <div id="dmActivityContent"></div>
     </section>
   </div>
@@ -722,7 +726,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], ownInsights: [], publishLog: [], dmActivity: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], ownInsights: [], publishLog: [], dmActivity: [], fbPageInsights: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -779,6 +783,7 @@
     state.ownInsights = data.ownInsights || [];
     state.publishLog = data.publishLog || [];
     state.dmActivity = data.dmActivity || [];
+    state.fbPageInsights = data.fbPageInsights || [];
     // null = tab CompetitorData belum diimpor sama sekali; {error:...} = sheet
     // ketemu tapi ada masalah (nama kolom dll) -- pesannya DITAMPILKAN, bukan
     // dibuang, biar ketauan sebabnya persis apa (bukan black box).
@@ -1125,7 +1130,7 @@
       var statusMsg = card.querySelector(".review-status-msg");
 
       card.querySelector(".review-approve-btn").addEventListener("click", async function(){
-        if(!confirm('Yakin tayangkan "' + it.text + '" ke ' + (dest ? dest.name : it.dest_id) + ' sekarang? Ini beneran publish ke Instagram, nggak bisa dibatalkan.')) return;
+        if(!confirm('Yakin tayangkan "' + it.text + '" ke ' + (dest ? dest.name : it.dest_id) + ' sekarang? Ini beneran publish ke ' + (dest ? dest.group : "platform ini") + ', nggak bisa dibatalkan.')) return;
         var btn = this;
         btn.disabled = true; btn.textContent = "Menayangkan...";
         try{
@@ -2236,6 +2241,55 @@
     });
   }
 
+  // Sama polanya kayak renderOwnInsights (Instagram), tapi buat Facebook Page.
+  function renderFbPageInsights(){
+    var content = document.getElementById("fbPageInsightsContent");
+    if(state.fbPageInsights.length === 0){
+      content.innerHTML = '<div class="cal-empty">Belum ada data. Jalankan syncFbPageInsights() dari editor Apps Script (pasang setupFbPageInsightsSyncTrigger() dulu biar otomatis tiap hari).</div>';
+      return;
+    }
+
+    var accountRows = state.fbPageInsights.filter(function(r){ return r.scope === "account"; })
+      .sort(function(a,b){ return String(a.synced_at).localeCompare(String(b.synced_at)); });
+    var postRows = state.fbPageInsights.filter(function(r){ return r.scope === "post"; })
+      .sort(function(a,b){ return String(b.post_date).localeCompare(String(a.post_date)); });
+    var errorRows = state.fbPageInsights.filter(function(r){ return r.scope === "account_error" || r.scope === "post_error"; });
+
+    var html = "";
+
+    if(accountRows.length){
+      var growthRows = accountRows.map(function(r, i){
+        var prev = i > 0 ? parseFloat(accountRows[i-1].page_fans_total) : null;
+        var cur = parseFloat(r.page_fans_total);
+        var delta = (prev !== null && !isNaN(cur) && !isNaN(prev)) ? (cur - prev) : null;
+        var deltaStr = delta === null ? "—" : (delta >= 0 ? "+" + delta : String(delta));
+        var dateStr = new Date(r.synced_at).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"});
+        return "<tr><td>" + dateStr + "</td><td>" + (r.page_fans_total || "—") + "</td><td>" + deltaStr + "</td></tr>";
+      }).join("");
+      html += '<div class="report-block"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--ink-sec);">Page Fans Growth</h4>' +
+        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Fans</th><th>Perubahan</th></tr></thead><tbody>' + growthRows + '</tbody></table></div>';
+    }
+
+    if(postRows.length){
+      var pRows = postRows.map(function(r){
+        return "<tr><td>" + (r.post_date || "—") + "</td>" +
+          "<td style='max-width:220px;'>" + (r.message_snippet || "—") + "</td>" +
+          "<td>" + (r.reactions || 0) + "</td><td>" + (r.comments || 0) + "</td><td>" + (r.shares || 0) + "</td>" +
+          "<td>" + (r.reach || "—") + "</td><td>" + (r.engaged_users || "—") + "</td></tr>";
+      }).join("");
+      html += '<details class="report-block" style="overflow-x:auto;"><summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-sec);">Performa per Post (klik buat buka — ' + postRows.length + ' post)</summary>' +
+        '<table class="report-table" style="margin-top:10px;"><thead><tr><th>Tanggal</th><th>Caption</th><th>Reactions</th><th>Komentar</th><th>Shares</th><th>Reach</th><th>Engaged Users</th></tr></thead><tbody>' + pRows + '</tbody></table></details>';
+    }
+
+    if(errorRows.length){
+      html += '<div class="report-block" style="border-left:3px solid var(--brick);"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--brick);">' + errorRows.length + ' sync gagal (klik untuk detail)</h4>' +
+        errorRows.slice(0, 5).map(function(r){ return '<div class="research-notes" style="margin-bottom:6px;">' + (r.message_snippet || "").slice(0,150) + '</div>'; }).join("") +
+        '</div>';
+    }
+
+    content.innerHTML = html || '<div class="cal-empty">Data ada tapi nggak ada baris yang cocok ditampilkan.</div>';
+  }
+
   // Jejak WAKTU pesan DM masuk -- BUKAN atribusi per-post (genuinely nggak
   // tersedia). Dikelompokkan per hari & jam biar bisa dibandingkan MANUAL
   // sama tabel "Hari Posting" di atas.
@@ -2246,7 +2300,7 @@
       return;
     }
 
-    var byDay = {}, byHour = {};
+    var byDay = {}, byHour = {}, byPlatform = {};
     state.dmActivity.forEach(function(r){
       if(!r.message_time) return;
       var d = new Date(r.message_time);
@@ -2255,6 +2309,8 @@
       var hour = d.getHours();
       byDay[dayName] = (byDay[dayName] || 0) + 1;
       byHour[hour] = (byHour[hour] || 0) + 1;
+      var plat = r.platform === "messenger" ? "Facebook Messenger" : "Instagram DM";
+      byPlatform[plat] = (byPlatform[plat] || 0) + 1;
     });
 
     function rankSimple(obj){
@@ -2268,11 +2324,13 @@
 
     var dayRanked = rankSimple(byDay);
     var hourRanked = rankSimple(byHour).map(function(r){ return { key: (String(r.key).length===1?"0":"") + r.key + ":00", count: r.count }; });
+    var platformRanked = rankSimple(byPlatform);
 
     content.innerHTML =
       '<div class="report-block">' +
         '<div class="report-head-row"><h3 style="margin:0;">Pesan Masuk</h3><span class="sample-badge">' + state.dmActivity.length + ' pesan tercatat</span></div>' +
         '<div class="report-tables">' +
+          '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Per Platform</h4>' + renderSimpleTable(platformRanked, "Platform") + '</div>' +
           '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Per Hari</h4>' + renderSimpleTable(dayRanked, "Hari") + '</div>' +
           '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Per Jam</h4>' + renderSimpleTable(hourRanked, "Jam") + '</div>' +
         '</div>' +
@@ -2563,6 +2621,7 @@
     renderLaporanKpi();
     renderLaporanResearch();
     renderOwnInsights();
+    renderFbPageInsights();
     renderDmActivity();
     renderPublishLog();
     var calDateVal = document.getElementById("calDate").value;
