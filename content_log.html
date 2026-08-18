@@ -2171,6 +2171,33 @@
         '<table class="report-table"><thead><tr><th>Tanggal</th><th>Followers</th><th>Perubahan</th></tr></thead><tbody>' + growthRows + '</tbody></table></div>';
     }
 
+    // Atribusi follower PER POST -- ini BEDA konsep dari "Follower Growth" di
+    // atas (itu snapshot TOTAL akun tiap sync). Ini klaim Meta sendiri: follow
+    // yang dianggap muncul KARENA post spesifik ini. Dua angka ini TIDAK akan
+    // pas sama persis -- Follower Growth juga ngitung unfollow, dan nggak
+    // semua follow baru berasal dari 1 post (bisa dari search, hashtag,
+    // kunjungan profil langsung, dll) -- ini jujur ditulis biar nggak ada yang
+    // nyoba nyocokin kedua angka dan bingung kenapa beda.
+    var mediaRowsForFollows = state.ownInsights.filter(function(r){ return r.scope === "media"; });
+    var mediaWithFollows = mediaRowsForFollows.filter(function(r){ return r.follows_from_post !== "" && r.follows_from_post !== undefined && !isNaN(parseFloat(r.follows_from_post)); });
+
+    if(mediaWithFollows.length > 0){
+      var sortedByFollows = mediaWithFollows.slice().sort(function(a,b){ return parseFloat(b.follows_from_post) - parseFloat(a.follows_from_post); });
+      var followRows = sortedByFollows.map(function(r, i){
+        return "<tr><td>" + (i===0 && parseFloat(r.follows_from_post)>0 ? "🏆 " : "") + (r.post_date||"—") + "</td>" +
+          "<td style='max-width:220px;'>" + (r.caption_snippet||"—") + "</td>" +
+          "<td>" + (IG_FORMAT_NAME_MAP[r.media_type]||r.media_type||"—") + "</td>" +
+          "<td><b>" + r.follows_from_post + "</b></td></tr>";
+      }).join("");
+      var noAttribCount = mediaRowsForFollows.length - mediaWithFollows.length;
+      html += '<div class="report-block" style="overflow-x:auto;"><h4 style="font-size:12.5px;margin:0 0 6px;color:var(--ink-sec);">Follower Baru per Post (atribusi dari Meta)</h4>' +
+        '<p style="font-size:11px;color:var(--ink-muted);margin:0 0 10px;">' + mediaWithFollows.length + ' dari ' + mediaRowsForFollows.length + ' post punya data atribusi' + (noAttribCount>0 ? ' (' + noAttribCount + ' lainnya belum ada datanya)' : '') + '. Angka ini TIDAK bakal pas sama persis sama tabel "Follower Growth" di atas — itu net (termasuk unfollow), ini cuma follow yang Meta atribusikan ke post spesifik.</p>' +
+        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Format</th><th>Follower Baru</th></tr></thead><tbody>' + followRows + '</tbody></table></div>';
+    } else if(mediaRowsForFollows.length > 0){
+      html += '<div class="report-block" style="border-left:3px solid var(--honey);"><h4 style="font-size:12.5px;margin:0 0 6px;color:var(--ink-sec);">Follower Baru per Post</h4>' +
+        '<p style="font-size:12px;color:var(--ink-sec);">Belum ada satu post pun yang punya data atribusi follow. Kemungkinan: (1) akun di bawah 100 follower — ini syarat minimal Meta buat metrik ini, (2) belum sync ulang sejak perbaikan terakhir — jalankan <code>syncOwnInstagramInsights</code> lagi, atau (3) ada error asli — cek Execution Log di Apps Script, cari baris "Metrik follows gagal".</p></div>';
+    }
+
     if(mediaRows.length){
       var postRows = mediaRows.map(function(r){
         var isAdChecked = (r.is_ad === true || r.is_ad === "TRUE" || r.is_ad === "true") ? "checked" : "";
