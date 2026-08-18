@@ -595,6 +595,10 @@
       <p class="section-sub">Data akun kamu sendiri (bukan kompetitor) lewat Instagram Graph API resmi — follower growth &amp; performa per post. Cuma keisi kalau kamu udah setup kredensial &amp; jalankan <code>syncOwnInstagramInsights()</code> dari editor Apps Script (lihat komentar "INSTAGRAM GRAPH API" di Code.gs).</p>
       <div id="ownInsightsContent"></div>
 
+      <h3 style="margin-top:28px;">Aktivitas DM</h3>
+      <p class="section-sub">⚠️ Ini <b>bukan</b> "postingan X menghasilkan Y DM" — atribusi per-post untuk DM genuinely nggak tersedia lewat API manapun (sudah dicek, termasuk Meta Ads). Ini jejak WAKTU pesan masuk (hari &amp; jam) — bandingkan manual sama tabel "Hari Posting" di atas buat lihat kemungkinan hubungan sendiri. Perlu <code>syncDmActivity()</code> dijalankan dulu.</p>
+      <div id="dmActivityContent"></div>
+
       <h3 style="margin-top:28px;">Log Auto-Publish</h3>
       <p class="section-sub">Jejak setiap kali sistem coba publish otomatis dari Checklist — sukses maupun gagal sama-sama dicatat, karena auto-publish jalan tanpa konfirmasi manual per postingan. Cek di sini kalau ada yang perlu ditinjau.</p>
       <div id="publishLogContent"></div>
@@ -723,7 +727,7 @@
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
-  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], ownInsights: [], publishLog: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
+  var state = { labels: [], destinations: [], checklist: [], kpi: [], baseline: [], researchLog: [], comboLock: [], stock: [], ownInsights: [], publishLog: [], dmActivity: [], instagramBaselineLive: null, instagramBaselineLiveError: null };
   var currentChecklistFilter = "all";
 
   /* ---------- API helpers ---------- */
@@ -779,6 +783,7 @@
     state.stock = data.stock || [];
     state.ownInsights = data.ownInsights || [];
     state.publishLog = data.publishLog || [];
+    state.dmActivity = data.dmActivity || [];
     // null = tab CompetitorData belum diimpor sama sekali; {error:...} = sheet
     // ketemu tapi ada masalah (nama kolom dll) -- pesannya DITAMPILKAN, bukan
     // dibuang, biar ketauan sebabnya persis apa (bukan black box).
@@ -1483,7 +1488,7 @@
   // (dari media_type asli), nggak cuma hari -- karena datanya per-post, bukan
   // cuma angka KPI harian yang diketik manual.
   function computeOwnIgLiveReco(destId){
-    var posts = state.ownInsights.filter(function(r){ return r.scope === "media"; });
+    var posts = state.ownInsights.filter(function(r){ return r.scope === "media" && !(r.is_ad === true || r.is_ad === "TRUE" || r.is_ad === "true"); });
     if(posts.length < MIN_OWN_DATA_FOR_LIVE) return null;
 
     function engagementOf(r){
@@ -2094,10 +2099,12 @@
   // Laporan Analisa buat transparansi penuh, konsisten sama gaya Kombinasi Matrix.
   function renderOwnIgFindings(){
     var content = document.getElementById("ownIgFindingsContent");
-    var posts = state.ownInsights.filter(function(r){ return r.scope === "media"; });
+    var allMediaPosts = state.ownInsights.filter(function(r){ return r.scope === "media"; });
+    var adCount = allMediaPosts.filter(function(r){ return r.is_ad === true || r.is_ad === "TRUE" || r.is_ad === "true"; }).length;
+    var posts = allMediaPosts.filter(function(r){ return !(r.is_ad === true || r.is_ad === "TRUE" || r.is_ad === "true"); });
 
     if(posts.length < MIN_OWN_DATA_FOR_LIVE){
-      content.innerHTML = '<div class="cal-empty">Baru ' + posts.length + ' post tersync (minimal ' + MIN_OWN_DATA_FOR_LIVE + ' buat mulai dipercaya). Jalankan syncOwnInstagramInsights lagi nanti setelah lebih banyak post ke-sync, atau ini akan otomatis lengkap seiring waktu.</div>';
+      content.innerHTML = '<div class="cal-empty">Baru ' + posts.length + ' post organik tersync (minimal ' + MIN_OWN_DATA_FOR_LIVE + ' buat mulai dipercaya)' + (adCount > 0 ? ' -- ' + adCount + ' post lain dikecualikan karena ditandai ad' : '') + '. Jalankan syncOwnInstagramInsights lagi nanti setelah lebih banyak post ke-sync, atau ini akan otomatis lengkap seiring waktu.</div>';
       return;
     }
 
@@ -2127,12 +2134,12 @@
 
     content.innerHTML =
       '<div class="report-block">' +
-        '<div class="report-head-row"><h3 style="margin:0;">qkopi.co — Data Real</h3><span class="sample-badge">' + posts.length + ' post tersync</span></div>' +
+        '<div class="report-head-row"><h3 style="margin:0;">qkopi.co — Data Real (Organik)</h3><span class="sample-badge">' + posts.length + ' post organik' + (adCount > 0 ? ' &middot; ' + adCount + ' post ad dikecualikan' : '') + '</span></div>' +
         '<div class="report-tables">' +
           '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Format (total engagement/post — likes+komentar+saved+share)</h4>' + renderRankTable(rank(byFormat), "Format", "Avg Eng.", "") + '</div>' +
           '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Hari Posting</h4>' + renderRankTable(rank(byDay), "Hari", "Avg Eng.", "") + '</div>' +
         '</div>' +
-        '<div class="used-by-row">Status: <b style="color:var(--moss);">✓ Aktif sebagai sumber utama</b> untuk semua destinasi Instagram (lihat tag "📸 Data IG Asli Kamu" di Kalender).</div>' +
+        '<div class="used-by-row">Status: <b style="color:var(--moss);">✓ Aktif sebagai sumber utama</b> untuk semua destinasi Instagram (lihat tag "📸 Data IG Asli Kamu" di Kalender). Post yang ditandai ad di tabel "Performa per Post" nggak ikut dihitung di sini.</div>' +
       '</div>';
   }
 
@@ -2166,14 +2173,17 @@
 
     if(mediaRows.length){
       var postRows = mediaRows.map(function(r){
+        var isAdChecked = (r.is_ad === true || r.is_ad === "TRUE" || r.is_ad === "true") ? "checked" : "";
         return "<tr><td>" + (r.post_date || "—") + "</td>" +
           "<td style='max-width:180px;'>" + (r.caption_snippet || "—") + "</td>" +
           "<td>" + (r.likes || 0) + "</td><td>" + (r.comments || 0) + "</td><td>" + (r.saved || 0) + "</td>" +
           "<td>" + (r.shares || 0) + "</td><td>" + (r.reach || "—") + "</td><td>" + (r.views || "—") + "</td>" +
-          "<td>" + (r.follows_from_post || "—") + "</td></tr>";
+          "<td>" + (r.follows_from_post || "—") + "</td>" +
+          "<td style='text-align:center;'><input type='checkbox' class='own-post-ad-checkbox' data-row-id='" + r.id + "' " + isAdChecked + "></td></tr>";
       }).join("");
       html += '<div class="report-block" style="overflow-x:auto;"><h4 style="font-size:12.5px;margin:0 0 10px;color:var(--ink-sec);">Performa per Post</h4>' +
-        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Likes</th><th>Komentar</th><th>Saved</th><th>Shares</th><th>Reach</th><th>Views</th><th>Follow dari Post</th></tr></thead><tbody>' + postRows + '</tbody></table></div>';
+        '<p style="font-size:11px;color:var(--ink-muted);margin:0 0 10px;">Centang "Ad?" kalau post ini pernah di-boost/diiklankan — post yang ditandai otomatis DIKECUALIKAN dari perhitungan "hari/format terbaik" di atas, biar nggak nyampur performa organik sama yang dibayar.</p>' +
+        '<table class="report-table"><thead><tr><th>Tanggal</th><th>Caption</th><th>Likes</th><th>Komentar</th><th>Saved</th><th>Shares</th><th>Reach</th><th>Views</th><th>Follow dari Post</th><th>Ad?</th></tr></thead><tbody>' + postRows + '</tbody></table></div>';
     }
 
     if(errorRows.length){
@@ -2183,6 +2193,68 @@
     }
 
     content.innerHTML = html || '<div class="cal-empty">Data ada tapi nggak ada baris yang cocok ditampilkan.</div>';
+
+    content.querySelectorAll(".own-post-ad-checkbox").forEach(function(cb){
+      cb.addEventListener("change", async function(){
+        var rowId = this.getAttribute("data-row-id");
+        var checked = this.checked;
+        this.disabled = true;
+        try{
+          await apiWrite("ownInsights", "update", { id: rowId, row: { is_ad: checked } });
+          var row = state.ownInsights.filter(function(r){ return r.id === rowId; })[0];
+          if(row) row.is_ad = checked;
+          renderOwnIgFindings(); // ranking hari/format perlu dihitung ulang, ini yang mengecualikan post ber-ad
+        }catch(err){
+          alert("Gagal update: " + err.message);
+          this.checked = !checked; // balikin kalau gagal
+        }finally{
+          this.disabled = false;
+        }
+      });
+    });
+  }
+
+  // Jejak WAKTU pesan DM masuk -- BUKAN atribusi per-post (genuinely nggak
+  // tersedia). Dikelompokkan per hari & jam biar bisa dibandingkan MANUAL
+  // sama tabel "Hari Posting" di atas.
+  function renderDmActivity(){
+    var content = document.getElementById("dmActivityContent");
+    if(state.dmActivity.length === 0){
+      content.innerHTML = '<div class="cal-empty">Belum ada data. Jalankan syncDmActivity() dari editor Apps Script (pasang setupDmActivitySyncTrigger() dulu biar otomatis tiap 6 jam).</div>';
+      return;
+    }
+
+    var byDay = {}, byHour = {};
+    state.dmActivity.forEach(function(r){
+      if(!r.message_time) return;
+      var d = new Date(r.message_time);
+      if(isNaN(d.getTime())) return;
+      var dayName = JS_DAY_TO_INDO[d.getDay()];
+      var hour = d.getHours();
+      byDay[dayName] = (byDay[dayName] || 0) + 1;
+      byHour[hour] = (byHour[hour] || 0) + 1;
+    });
+
+    function rankSimple(obj){
+      return Object.keys(obj).map(function(k){ return { key:k, count:obj[k] }; }).sort(function(a,b){ return b.count - a.count; });
+    }
+    function renderSimpleTable(rankedArr, colLabel){
+      if(rankedArr.length === 0) return '<div class="cal-empty">Tidak ada data.</div>';
+      var rows = rankedArr.map(function(r,i){ return "<tr><td>" + (i===0?"🏆 ":"") + r.key + "</td><td>" + r.count + "</td></tr>"; }).join("");
+      return '<table class="report-table"><thead><tr><th>' + colLabel + '</th><th>Jumlah Pesan</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    var dayRanked = rankSimple(byDay);
+    var hourRanked = rankSimple(byHour).map(function(r){ return { key: (String(r.key).length===1?"0":"") + r.key + ":00", count: r.count }; });
+
+    content.innerHTML =
+      '<div class="report-block">' +
+        '<div class="report-head-row"><h3 style="margin:0;">Pesan Masuk</h3><span class="sample-badge">' + state.dmActivity.length + ' pesan tercatat</span></div>' +
+        '<div class="report-tables">' +
+          '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Per Hari</h4>' + renderSimpleTable(dayRanked, "Hari") + '</div>' +
+          '<div><h4 style="font-size:12.5px;margin:0 0 8px;color:var(--ink-sec);">Per Jam</h4>' + renderSimpleTable(hourRanked, "Jam") + '</div>' +
+        '</div>' +
+      '</div>';
   }
 
   var PUBLISH_STATUS_LABELS = { success: "Sukses (tayang)", failed: "Gagal", skipped_rate_limit: "Dilewati (rate limit)", prepared: "Disiapkan (nunggu review)", rejected: "Ditolak manual" };
@@ -2469,6 +2541,7 @@
     renderLaporanKpi();
     renderLaporanResearch();
     renderOwnInsights();
+    renderDmActivity();
     renderPublishLog();
     var calDateVal = document.getElementById("calDate").value;
     if(calDateVal) renderCalendarForDate(calDateVal);
