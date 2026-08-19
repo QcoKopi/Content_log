@@ -362,6 +362,7 @@
 
       <div style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <button id="manualPrepareBtn" class="btn" style="background:var(--moss);color:#fff;">▶ Publish Sekarang</button>
+        <button id="clearDoneBtn" class="btn-danger">🗑 Hapus yang Sudah Selesai</button>
         <span class="section-sub" style="margin:0;">Cek &amp; siapkan checklist yang jamnya udah lewat — sama kayak nunggu trigger jam-an, tapi langsung sekarang. Butuh beberapa detik sampai ~1 menit.</span>
       </div>
       <div id="manualPrepareStatus" style="font-size:12px;margin-top:8px;"></div>
@@ -1265,6 +1266,8 @@
       card.querySelector(".cal-save").addEventListener("click", async function(){
         var text = card.querySelector(".cal-text").value.trim();
         if(!text){ alert("Isi ide/nama konten dulu."); return; }
+        var saveBtn = this;
+        if(saveBtn.disabled) return; // udah lagi proses, cegah klik ganda bikin baris dobel
         var row = {
           text: text,
           dest_id: dest.id,
@@ -1277,6 +1280,7 @@
           created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" }),
           created_at: new Date().toISOString()
         };
+        saveBtn.disabled = true;
         try{
           var res = await apiWrite("checklist", "add", { row: row });
           row.id = res.id;
@@ -1287,6 +1291,7 @@
           renderChecklist();
           alert('Tersimpan ke Checklist untuk ' + dest.name + ', ' + dateStr + '.');
         }catch(err){ alert("Gagal simpan: " + err.message); }
+        finally{ saveBtn.disabled = false; }
       });
 
       results.appendChild(card);
@@ -2489,6 +2494,23 @@
       renderChecklist();
     }catch(err){ alert("Gagal tambah: " + err.message); }
     finally{ if(submitBtn) submitBtn.disabled = false; }
+  });
+
+  document.getElementById("clearDoneBtn").addEventListener("click", async function(){
+    var doneItems = state.checklist.filter(function(it){ return it.done === true || it.done === "TRUE" || it.done === "true"; });
+    if(doneItems.length === 0){ alert("Nggak ada item selesai buat dihapus."); return; }
+    if(!confirm('Hapus ' + doneItems.length + ' item yang sudah selesai/tayang? Ini permanen, cuma hapus dari Checklist -- postingan yang udah tayang di Instagram/Facebook TETAP ada di sana, ini cuma bersihin daftar kerjanya.')) return;
+    var btn = this;
+    btn.disabled = true; btn.textContent = "⏳ Menghapus...";
+    var failed = [];
+    for(var i = 0; i < doneItems.length; i++){
+      try{ await apiWrite("checklist", "delete", { id: doneItems[i].id }); }
+      catch(err){ failed.push(doneItems[i].id); }
+    }
+    state.checklist = state.checklist.filter(function(it){ return !doneItems.some(function(d){ return d.id === it.id; }) || failed.indexOf(it.id) !== -1; });
+    renderChecklist();
+    btn.disabled = false; btn.textContent = "🗑 Hapus yang Sudah Selesai";
+    if(failed.length) alert(failed.length + ' item gagal dihapus, coba lagi.');
   });
 
   document.getElementById("manualPrepareBtn").addEventListener("click", async function(){
