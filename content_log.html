@@ -360,6 +360,12 @@
       </div>
       <ul id="checklist"></ul>
 
+      <div style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <button id="manualPrepareBtn" class="btn" style="background:var(--moss);color:#fff;">▶ Publish Sekarang</button>
+        <span class="section-sub" style="margin:0;">Cek &amp; siapkan checklist yang jamnya udah lewat — sama kayak nunggu trigger jam-an, tapi langsung sekarang. Butuh beberapa detik sampai ~1 menit.</span>
+      </div>
+      <div id="manualPrepareStatus" style="font-size:12px;margin-top:8px;"></div>
+
       <h3 style="margin-top:28px;">Log Auto-Publish</h3>
       <p class="section-sub">Jejak setiap kali sistem coba publish otomatis dari checklist di atas — sukses maupun gagal sama-sama dicatat, karena auto-publish jalan tanpa konfirmasi manual per postingan. Item yang checkbox-nya masih kosong berarti belum disetujui/tayang — cek "Menunggu Persetujuan" di tab Kalender.</p>
       <div id="publishLogContent"></div>
@@ -2459,6 +2465,8 @@
     var textInput = document.getElementById("itemText");
     var text = textInput.value.trim();
     if(!text) return;
+    var submitBtn = e.target.querySelector("button[type=submit], button:not([type])");
+    if(submitBtn && submitBtn.disabled) return; // udah lagi proses, cegah klik ganda
     var stockPicker = document.getElementById("itemStockPicker");
     var row = {
       text: text,
@@ -2470,6 +2478,7 @@
       created: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" }),
       created_at: new Date().toISOString()
     };
+    if(submitBtn) submitBtn.disabled = true;
     try{
       var res = await apiWrite("checklist", "add", { row: row });
       row.id = res.id;
@@ -2479,6 +2488,27 @@
       document.getElementById("itemFormat").value = "";
       renderChecklist();
     }catch(err){ alert("Gagal tambah: " + err.message); }
+    finally{ if(submitBtn) submitBtn.disabled = false; }
+  });
+
+  document.getElementById("manualPrepareBtn").addEventListener("click", async function(){
+    var btn = this;
+    var status = document.getElementById("manualPrepareStatus");
+    btn.disabled = true;
+    btn.textContent = "⏳ Memproses...";
+    status.style.color = "var(--ink-sec)";
+    status.textContent = "Sedang cek checklist yang jamnya udah lewat, bisa makan waktu sampai ~1 menit...";
+    try{
+      var res = await apiWrite("manualTrigger", "prepareAll", {});
+      status.style.color = "var(--moss)";
+      status.textContent = "✓ " + (res.message || "Selesai.") + " Reload halaman buat lihat hasil terbaru di Log & Menunggu Persetujuan.";
+    }catch(err){
+      status.style.color = "var(--brick)";
+      status.textContent = "Gagal: " + err.message;
+    }finally{
+      btn.disabled = false;
+      btn.textContent = "▶ Publish Sekarang";
+    }
   });
 
   document.getElementById("filterTabs").addEventListener("click", function(e){
