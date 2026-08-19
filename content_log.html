@@ -894,11 +894,15 @@
     var name = document.getElementById("newLabelName").value.trim();
     var color = document.getElementById("newLabelColor").value;
     if(!name){ alert("Isi nama label dulu."); return; }
+    var btn = this;
+    if(btn.disabled) return;
+    btn.disabled = true;
     try{
       await apiWrite("labels", "add", { row: { name: name, color: color } });
       document.getElementById("newLabelName").value = "";
       await reloadAll();
     }catch(err){ alert("Gagal tambah label: " + err.message); }
+    finally{ btn.disabled = false; }
   });
 
   /* ---------- Destinations table ---------- */
@@ -944,6 +948,9 @@
     var area = document.getElementById("newDestArea").value;
     if(!name){ alert("Isi nama destinasi dulu."); return; }
     if(days.length === 0){ alert("Pilih minimal 1 hari posting."); return; }
+    var btn = this;
+    if(btn.disabled) return;
+    btn.disabled = true;
     try{
       await apiWrite("destinations", "add", { row: {
         name: name, group: group, days: days.join(","), start_offset: offset, label_pool: pool.join(","),
@@ -952,6 +959,7 @@
       document.getElementById("newDestName").value = "";
       await reloadAll();
     }catch(err){ alert("Gagal tambah destinasi: " + err.message); }
+    finally{ btn.disabled = false; }
   });
 
   /* ---------- Stock Konten -- aset siap pakai, ID otomatis TIPE-LABEL-URUT ---------- */
@@ -1025,6 +1033,9 @@
     var link = document.getElementById("newStockLink").value.trim();
     if(!name){ alert("Isi nama konten dulu."); return; }
     if(!labelId){ alert("Pilih label dulu (tambah label di section Label Konten kalau belum ada)."); return; }
+    var btn = this;
+    if(btn.disabled) return; // udah lagi proses -- cegah klik ganda bikin ID kembar (generateStockId baca dari state lokal yg belum ke-update)
+    btn.disabled = true;
     var id = generateStockId(type, labelId);
     var row = { id: id, nama_konten: name, type: type, label_id: labelId, link: link, created_at: new Date().toISOString() };
     try{
@@ -1035,6 +1046,7 @@
       renderStockTable();
       populateStockPickers();
     }catch(err){ alert("Gagal tambah stock: " + err.message); }
+    finally{ btn.disabled = false; }
   });
 
   /* ---------- Schedule (computed, data-driven) ---------- */
@@ -2378,6 +2390,8 @@
     var value = document.getElementById("rfValue").value.trim();
     var sourceName = document.getElementById("rfSourceName").value.trim();
     if(!value || !sourceName){ alert("Isi minimal nilai temuan dan nama sumber."); return; }
+    var submitBtn = e.target.querySelector("button[type=submit], button:not([type])");
+    if(submitBtn && submitBtn.disabled) return;
     var row = {
       timestamp: new Date().toISOString(),
       platform: document.getElementById("rfPlatform").value,
@@ -2387,6 +2401,7 @@
       source_url: document.getElementById("rfSourceUrl").value.trim(),
       notes: document.getElementById("rfNotes").value.trim()
     };
+    if(submitBtn) submitBtn.disabled = true;
     try{
       var res = await apiWrite("researchLog", "add", { row: row });
       row.id = res.id;
@@ -2397,6 +2412,7 @@
       document.getElementById("rfNotes").value = "";
       renderLaporanResearch();
     }catch(err){ alert("Gagal catat temuan: " + err.message); }
+    finally{ if(submitBtn) submitBtn.disabled = false; }
   });
 
   function renderChecklist(){
@@ -2605,6 +2621,8 @@
 
   document.getElementById("kpiForm").addEventListener("submit", async function(e){
     e.preventDefault();
+    var submitBtn = e.target.querySelector("button[type=submit], button:not([type])");
+    if(submitBtn && submitBtn.disabled) return;
     var row = {
       timestamp: new Date().toISOString(),
       dest_id: document.getElementById("kpiDest").value,
@@ -2613,6 +2631,7 @@
       content_ref: document.getElementById("kpiContentRef").value.trim(),
       notes: document.getElementById("kpiNotes").value.trim()
     };
+    if(submitBtn) submitBtn.disabled = true;
     try{
       var res = await apiWrite("kpi", "add", { row: row });
       row.id = res.id;
@@ -2622,6 +2641,7 @@
       document.getElementById("kpiNotes").value = "";
       renderKpiTable();
     }catch(err){ alert("Gagal catat KPI: " + err.message); }
+    finally{ if(submitBtn) submitBtn.disabled = false; }
   });
 
   document.getElementById("kpiFilterDest").addEventListener("change", renderKpiTable);
