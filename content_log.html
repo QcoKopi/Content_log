@@ -2469,6 +2469,7 @@
       var del = document.createElement("button");
       del.className = "item-del"; del.innerHTML = "&times;";
       del.addEventListener("click", async function(){
+        if(!confirm('Hapus "' + it.text + '" dari Checklist?')) return;
         try{
           await apiWrite("checklist", "delete", { id: it.id });
           state.checklist = state.checklist.filter(function(x){ return x.id !== it.id; });
