@@ -3,6 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ============================================================
+     BARU (2026-08-22): GUARD TOKEN AKSES PORTAL -- mencegah halaman
+     ini dibuka LANGSUNG (bookmark/link lama) tanpa lewat tombol
+     "Buka Content Plan Tool" di QSystem. QSystem menerbitkan token
+     sekali-pakai umur pendek (60 detik) SEBELUM membuka tab ini;
+     guard di bawah HARUS memvalidasi token itu SEBELUM konten apa
+     pun ditampilkan -- kalau tidak ada/tidak valid, langsung
+     dialihkan balik ke qsys.qcoid.com. TIDAK menyentuh logika/kode
+     apa pun di bawah ini -- murni ditambahkan di depan sebagai
+     gerbang independen. Pola SAMA PERSIS dengan yang sudah terbukti
+     jalan di Sales Portal dan QFin -- backend URL SENGAJA memakai
+     CONFIG.GAS_URL milik QSystem (yang menerbitkan token), TERLEPAS
+     dari backend apa pun yang dipakai file ini sendiri untuk data
+     Content Plan-nya.
+     ============================================================ -->
+<style id="portal-guard-style">html{display:none !important;}</style>
+<script>
+(function(){
+  var PORTAL_GUARD_GAS_URL = 'https://script.google.com/macros/s/AKfycbxETc9Xv6udc7U0N9yflz7DrosN3PH1STUhF-d1qrW0ST48DKjFU4w8Kafuadm09XU/exec';
+  var QSYS_URL = 'https://qsys.qcoid.com/';
+
+  function redirectAway(){
+    window.location.replace(QSYS_URL);
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  var token = params.get('t');
+
+  if (!token) {
+    redirectAway();
+  } else {
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function(){ controller.abort(); }, 8000);
+    fetch(PORTAL_GUARD_GAS_URL + '?action=validatePortalToken&token=' + encodeURIComponent(token) + '&_t=' + Date.now(), { signal: controller.signal })
+      .then(function(r){ clearTimeout(timeoutId); return r.json(); })
+      .then(function(res){
+        if (res && res.success && res.data && res.data.valid) {
+          var styleEl = document.getElementById('portal-guard-style');
+          if (styleEl) styleEl.remove();
+        } else {
+          redirectAway();
+        }
+      })
+      .catch(function(){ redirectAway(); });
+  }
+})();
+</script>
 <title>Content Plan</title>
 <style>
   :root{
