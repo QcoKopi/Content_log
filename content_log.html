@@ -3,53 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- ============================================================
-     BARU (2026-08-22): GUARD TOKEN AKSES PORTAL -- mencegah halaman
-     ini dibuka LANGSUNG (bookmark/link lama) tanpa lewat tombol
-     "Buka Content Plan Tool" di QSystem. QSystem menerbitkan token
-     sekali-pakai umur pendek (60 detik) SEBELUM membuka tab ini;
-     guard di bawah HARUS memvalidasi token itu SEBELUM konten apa
-     pun ditampilkan -- kalau tidak ada/tidak valid, langsung
-     dialihkan balik ke qsys.qcoid.com. TIDAK menyentuh logika/kode
-     apa pun di bawah ini -- murni ditambahkan di depan sebagai
-     gerbang independen. Pola SAMA PERSIS dengan yang sudah terbukti
-     jalan di Sales Portal dan QFin -- backend URL SENGAJA memakai
-     CONFIG.GAS_URL milik QSystem (yang menerbitkan token), TERLEPAS
-     dari backend apa pun yang dipakai file ini sendiri untuk data
-     Content Plan-nya.
-     ============================================================ -->
-<style id="portal-guard-style">html{display:none !important;}</style>
-<script>
-(function(){
-  var PORTAL_GUARD_GAS_URL = 'https://script.google.com/macros/s/AKfycbxETc9Xv6udc7U0N9yflz7DrosN3PH1STUhF-d1qrW0ST48DKjFU4w8Kafuadm09XU/exec';
-  var QSYS_URL = 'https://qsys.qcoid.com/';
-
-  function redirectAway(){
-    window.location.replace(QSYS_URL);
-  }
-
-  var params = new URLSearchParams(window.location.search);
-  var token = params.get('t');
-
-  if (!token) {
-    redirectAway();
-  } else {
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function(){ controller.abort(); }, 8000);
-    fetch(PORTAL_GUARD_GAS_URL + '?action=validatePortalToken&token=' + encodeURIComponent(token) + '&_t=' + Date.now(), { signal: controller.signal })
-      .then(function(r){ clearTimeout(timeoutId); return r.json(); })
-      .then(function(res){
-        if (res && res.success && res.data && res.data.valid) {
-          var styleEl = document.getElementById('portal-guard-style');
-          if (styleEl) styleEl.remove();
-        } else {
-          redirectAway();
-        }
-      })
-      .catch(function(){ redirectAway(); });
-  }
-})();
-</script>
 <title>Content Plan</title>
 <style>
   :root{
@@ -221,6 +174,20 @@
   .cal-picker input:focus{outline:2px solid var(--espresso);outline-offset:1px;}
   .cal-daylabel{font-family:var(--font-display);font-size:16px;font-weight:600;}
   .cal-empty{padding:24px;text-align:center;color:var(--ink-sec);font-size:13.5px;border:1px dashed var(--border-strong);border-radius:10px;}
+  .sched-group{margin-bottom:16px;}
+  .sched-group-head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;font-family:var(--font-mono);font-size:12px;color:var(--ink-sec);text-transform:uppercase;letter-spacing:0.04em;}
+  .sched-group-head .today-badge{background:var(--moss);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;text-transform:none;letter-spacing:0;}
+  .sched-group-head .overdue-badge{background:var(--brick);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;text-transform:none;letter-spacing:0;}
+  .sched-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:9px;margin-bottom:6px;font-size:13px;}
+  .sched-item-time{font-family:var(--font-mono);font-size:12px;color:var(--ink-sec);min-width:44px;}
+  .sched-item-dest{font-weight:600;color:var(--ink);white-space:nowrap;}
+  .sched-item-text{flex:1;color:var(--ink-sec);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sched-status{font-size:10.5px;padding:2px 9px;border-radius:20px;white-space:nowrap;font-family:var(--font-mono);}
+  .sched-status-scheduled{background:var(--bg-warm);color:var(--ink-muted);}
+  .sched-status-ready{background:#FBF1DD;color:#8A6420;}
+  .sched-status-published{background:#E8EFE3;color:var(--moss);}
+  .sched-status-rejected{background:#F5E4E1;color:var(--brick);}
+  .sched-status-noStock{background:#F5E4E1;color:var(--brick);}
 
   .cal-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
   .cal-card-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
@@ -371,6 +338,12 @@
       <div class="section-head"><span class="section-num">•</span><h2>Menunggu Persetujuan</h2></div>
       <p class="section-sub">Konten yang udah disiapkan otomatis (media &amp; caption sudah keupload ke Instagram sebagai draft) tapi <b>belum tayang</b> — nunggu kamu cek dulu. Container kadaluarsa 24 jam kalau kelamaan nggak diputuskan.</p>
       <div id="reviewQueueContent"></div>
+    </section>
+
+    <section>
+      <div class="section-head"><span class="section-num">•</span><h2>Jadwal Konten Mendatang</h2></div>
+      <p class="section-sub">Semua yang sudah dijadwalkan di Checklist, dikelompokkan per tanggal — biar kelihatan rencana posting ke depan dalam 1 pandangan, tanpa perlu klik tanggal satu-satu di bawah.</p>
+      <div id="upcomingScheduleContent"></div>
     </section>
 
     <section>
@@ -1205,6 +1178,7 @@
           statusMsg.textContent = "✓ Berhasil tayang (media ID: " + res.ig_media_id + ").";
           it.review_status = "published"; it.done = true;
           setTimeout(function(){ renderReviewQueue(); renderChecklist(); }, 1200);
+          renderUpcomingSchedule();
         }catch(err){
           statusMsg.style.color = "var(--brick)";
           statusMsg.textContent = "Gagal: " + err.message;
@@ -1225,6 +1199,85 @@
 
       content.appendChild(card);
     });
+  }
+
+  // Ringkasan jadwal per tanggal -- item HARI INI & MENDATANG ditampilkan
+  // apa adanya (termasuk yang udah tayang, biar rencana 1 hari kelihatan
+  // utuh); item yang TANGGALNYA UDAH LEWAT tapi belum done dikelompokkan
+  // terpisah sebagai "Terlewat", karena itu butuh perhatian.
+  function renderUpcomingSchedule(){
+    var content = document.getElementById("upcomingScheduleContent");
+    var todayStr = new Date().toISOString().slice(0, 10);
+
+    var scheduled = state.checklist.filter(function(it){ return !!it.post_date; });
+    var overdue = scheduled.filter(function(it){
+      var isDone = it.done === true || it.done === "TRUE" || it.done === "true";
+      return !isDone && it.post_date < todayStr;
+    });
+    var upcoming = scheduled.filter(function(it){ return it.post_date >= todayStr; });
+
+    if(overdue.length === 0 && upcoming.length === 0){
+      content.innerHTML = '<div class="cal-empty">Belum ada yang dijadwalkan. Pilih tanggal di bawah buat mulai nambah.</div>';
+      return;
+    }
+
+    function statusOf(it){
+      var isDone = it.done === true || it.done === "TRUE" || it.done === "true";
+      if(isDone) return { label: "✓ Tayang", cls: "sched-status-published" };
+      if(it.review_status === "ready") return { label: "Nunggu Review", cls: "sched-status-ready" };
+      if(it.review_status === "rejected") return { label: "Ditolak", cls: "sched-status-rejected" };
+      if(it.review_status === "expired") return { label: "Kadaluarsa", cls: "sched-status-rejected" };
+      if(!it.stock_id) return { label: "⚠ Belum ada stock", cls: "sched-status-noStock" };
+      return { label: "Terjadwal", cls: "sched-status-scheduled" };
+    }
+
+    function renderItem(it){
+      var dest = state.destinations.filter(function(d){ return d.id === it.dest_id; })[0];
+      var st = statusOf(it);
+      return '<div class="sched-item">' +
+        '<span class="sched-item-time">' + (it.post_time || "—") + '</span>' +
+        '<span class="sched-item-dest">' + (dest ? dest.name : it.dest_id) + '</span>' +
+        '<span class="sched-item-text">' + (it.text || "(tanpa judul)") + '</span>' +
+        '<span class="sched-status ' + st.cls + '">' + st.label + '</span>' +
+        '</div>';
+    }
+
+    function groupByDate(items){
+      var groups = {};
+      items.forEach(function(it){
+        groups[it.post_date] = groups[it.post_date] || [];
+        groups[it.post_date].push(it);
+      });
+      return groups;
+    }
+
+    var html = "";
+
+    if(overdue.length){
+      var overdueGroups = groupByDate(overdue);
+      var overdueDates = Object.keys(overdueGroups).sort();
+      html += '<div class="sched-group"><div class="sched-group-head"><span class="overdue-badge">⚠ Terlewat</span></div>';
+      overdueDates.forEach(function(dateStr){
+        var items = overdueGroups[dateStr].sort(function(a,b){ return (a.post_time||"").localeCompare(b.post_time||""); });
+        var dateLabel = new Date(dateStr + "T00:00:00").toLocaleDateString("id-ID", { weekday:"long", day:"numeric", month:"long" });
+        html += '<div style="font-size:11.5px;color:var(--ink-muted);margin:8px 0 4px;">' + dateLabel + '</div>';
+        items.forEach(function(it){ html += renderItem(it); });
+      });
+      html += '</div>';
+    }
+
+    var upcomingGroups = groupByDate(upcoming);
+    var upcomingDates = Object.keys(upcomingGroups).sort();
+    upcomingDates.forEach(function(dateStr){
+      var items = upcomingGroups[dateStr].sort(function(a,b){ return (a.post_time||"").localeCompare(b.post_time||""); });
+      var isToday = dateStr === todayStr;
+      var dateLabel = new Date(dateStr + "T00:00:00").toLocaleDateString("id-ID", { weekday:"long", day:"numeric", month:"long" });
+      html += '<div class="sched-group"><div class="sched-group-head">' + dateLabel + (isToday ? ' <span class="today-badge">Hari Ini</span>' : '') + '</div>';
+      items.forEach(function(it){ html += renderItem(it); });
+      html += '</div>';
+    });
+
+    content.innerHTML = html;
   }
 
   function renderCalendarForDate(dateStr){
@@ -1348,6 +1401,7 @@
           card.querySelector(".cal-stock-picker").value = "";
           form.classList.remove("open");
           renderChecklist();
+          renderUpcomingSchedule();
           alert('Tersimpan ke Checklist untuk ' + dest.name + ', ' + dateStr + '.');
         }catch(err){ alert("Gagal simpan: " + err.message); }
         finally{ saveBtn.disabled = false; }
@@ -2493,6 +2547,7 @@
         try{
           await apiWrite("checklist", "update", { id: it.id, row: { done: cb.checked } });
           it.done = cb.checked; renderChecklist();
+          renderUpcomingSchedule();
         }catch(err){ alert("Gagal update: " + err.message); cb.checked = !cb.checked; }
       });
       li.appendChild(cb);
@@ -2521,6 +2576,7 @@
           await apiWrite("checklist", "delete", { id: it.id });
           state.checklist = state.checklist.filter(function(x){ return x.id !== it.id; });
           renderChecklist();
+          renderUpcomingSchedule();
         }catch(err){ alert("Gagal hapus: " + err.message); }
       });
       li.appendChild(del);
@@ -2556,6 +2612,7 @@
       stockPicker.value = "";
       document.getElementById("itemFormat").value = "";
       renderChecklist();
+      renderUpcomingSchedule();
     }catch(err){ alert("Gagal tambah: " + err.message); }
     finally{ if(submitBtn) submitBtn.disabled = false; }
   });
@@ -2573,6 +2630,7 @@
     }
     state.checklist = state.checklist.filter(function(it){ return !doneItems.some(function(d){ return d.id === it.id; }) || failed.indexOf(it.id) !== -1; });
     renderChecklist();
+    renderUpcomingSchedule();
     btn.disabled = false; btn.textContent = "🗑 Hapus yang Sudah Selesai";
     if(failed.length) alert(failed.length + ' item gagal dihapus, coba lagi.');
   });
@@ -2603,6 +2661,7 @@
     btn.classList.add("active");
     currentChecklistFilter = btn.getAttribute("data-filter");
     renderChecklist();
+    renderUpcomingSchedule();
   });
 
   /* ---------- Progress curve ---------- */
@@ -2723,6 +2782,7 @@
 
   function renderAll(){
     renderReviewQueue();
+    renderUpcomingSchedule();
     renderBaselineGrid();
     renderLabelLegend();
     renderLabelsTable();
