@@ -701,7 +701,7 @@
           <div class="field"><label>Label</label><select id="newStockLabel"></select></div>
         </div>
         <div class="inline-form" style="margin-top:8px;">
-          <div class="field" style="flex:2;"><label>Link Stock</label><input type="text" id="newStockLink" placeholder="link Drive/Canva/dst ke file aslinya"></div>
+          <div class="field" style="flex:2;"><label>Link Stock</label><input type="text" id="newStockLink" placeholder="Paste link share Drive biasa -- otomatis dikonversi"></div>
           <div class="field"><button class="btn" id="addStockBtn">Tambah Stock</button></div>
         </div>
       </div>
@@ -997,6 +997,23 @@
   // jadi "CAR-EDUK-003" beneran berarti "carousel edukasi yang ke-3", bukan
   // sekadar nomor urut acak. Dibuat di CLIENT (bukan server) karena butuh liat
   // seluruh state.stock buat nentuin nomor urut berikutnya.
+  // Ubah link share Drive biasa (yang keluar dari tombol "Copy link") jadi
+  // format direct-download yang dibutuhin Instagram/Facebook API. User
+  // tinggal paste apa adanya, nggak perlu ekstrak FILE_ID atau susun URL
+  // manual -- itu keluhan yang bikin fitur ini dibuat.
+  function normalizeDriveLink(url){
+    if(!url) return url;
+    url = url.trim();
+    // Format share standar: drive.google.com/file/d/FILE_ID/view?usp=sharing
+    var m = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if(m) return "https://drive.google.com/uc?export=download&id=" + m[1];
+    // Format "open?id=FILE_ID" (link lama/alternatif dari Drive)
+    var m2 = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+    if(m2) return "https://drive.google.com/uc?export=download&id=" + m2[1];
+    // Udah direct-link, atau bukan link Drive sama sekali -- biarkan apa adanya
+    return url;
+  }
+
   function generateStockId(type, labelId){
     var typeCode = STOCK_TYPE_CODES[type] || type.replace(/[^a-zA-Z]/g,"").slice(0,3).toUpperCase() || "TYP";
     var labelCode = stockLabelCode_(labelId);
@@ -1046,11 +1063,16 @@
     });
   }
 
+  document.getElementById("newStockLink").addEventListener("blur", function(){
+    var converted = normalizeDriveLink(this.value.trim());
+    if(converted !== this.value.trim()) this.value = converted; // cuma ubah kalau beneran ke-convert, biar link non-Drive nggak keutak-atik
+  });
+
   document.getElementById("addStockBtn").addEventListener("click", async function(){
     var name = document.getElementById("newStockName").value.trim();
     var type = document.getElementById("newStockType").value;
     var labelId = document.getElementById("newStockLabel").value;
-    var link = document.getElementById("newStockLink").value.trim();
+    var link = normalizeDriveLink(document.getElementById("newStockLink").value.trim());
     if(!name){ alert("Isi nama konten dulu."); return; }
     if(!labelId){ alert("Pilih label dulu (tambah label di section Label Konten kalau belum ada)."); return; }
     var btn = this;
