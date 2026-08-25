@@ -701,7 +701,9 @@
           <div class="field"><label>Label</label><select id="newStockLabel"></select></div>
         </div>
         <div class="inline-form" style="margin-top:8px;">
-          <div class="field" style="flex:2;"><label>Link Stock</label><input type="text" id="newStockLink" placeholder="Paste link share Drive biasa -- otomatis dikonversi"></div>
+          <div class="field" style="flex:2;"><label>Link Stock</label><textarea id="newStockLink" rows="1" style="resize:vertical;min-height:38px;font-family:var(--font-sans);font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;width:100%;" placeholder="Paste link share Drive biasa -- otomatis dikonversi"></textarea>
+            <div id="stockLinkHint" style="font-size:11px;color:var(--ink-muted);margin-top:4px;"></div>
+          </div>
           <div class="field"><button class="btn" id="addStockBtn">Tambah Stock</button></div>
         </div>
       </div>
@@ -1064,17 +1066,41 @@
   }
 
   document.getElementById("newStockLink").addEventListener("blur", function(){
-    var converted = normalizeDriveLink(this.value.trim());
-    if(converted !== this.value.trim()) this.value = converted; // cuma ubah kalau beneran ke-convert, biar link non-Drive nggak keutak-atik
+    var lines = this.value.split("\n").map(function(l){ return normalizeDriveLink(l.trim()); }).filter(function(l){ return l !== ""; });
+    this.value = lines.join("\n");
   });
+
+  function updateStockLinkHint(){
+    var type = document.getElementById("newStockType").value;
+    var hint = document.getElementById("stockLinkHint");
+    if(type === "Carousel"){
+      hint.textContent = "Carousel butuh 2-10 foto -- paste tiap link di baris terpisah (Enter buat baris baru).";
+      hint.style.color = "var(--honey)";
+    } else {
+      hint.textContent = "1 link aja buat tipe ini.";
+      hint.style.color = "var(--ink-muted)";
+    }
+  }
+  document.getElementById("newStockType").addEventListener("change", updateStockLinkHint);
+  updateStockLinkHint();
 
   document.getElementById("addStockBtn").addEventListener("click", async function(){
     var name = document.getElementById("newStockName").value.trim();
     var type = document.getElementById("newStockType").value;
     var labelId = document.getElementById("newStockLabel").value;
-    var link = normalizeDriveLink(document.getElementById("newStockLink").value.trim());
+    var linkLines = document.getElementById("newStockLink").value.split("\n")
+      .map(function(l){ return normalizeDriveLink(l.trim()); }).filter(function(l){ return l !== ""; });
     if(!name){ alert("Isi nama konten dulu."); return; }
     if(!labelId){ alert("Pilih label dulu (tambah label di section Label Konten kalau belum ada)."); return; }
+    if(linkLines.length === 0){ alert("Isi minimal 1 link."); return; }
+    if(type === "Carousel" && (linkLines.length < 2 || linkLines.length > 10)){
+      alert("Carousel butuh 2-10 link foto -- saat ini ada " + linkLines.length + ". Tambah/kurangi baris link dulu.");
+      return;
+    }
+    if(type !== "Carousel" && linkLines.length > 1){
+      if(!confirm("Ada " + linkLines.length + " link tapi tipe bukan Carousel -- cuma link PERTAMA yang bakal dipakai. Lanjut?")) return;
+    }
+    var link = linkLines.join("\n");
     var btn = this;
     if(btn.disabled) return; // udah lagi proses -- cegah klik ganda bikin ID kembar (generateStockId baca dari state lokal yg belum ke-update)
     btn.disabled = true;
