@@ -785,13 +785,13 @@
 
   async function loadSavedUrl(){
     try{
-      var res = await window.storage.get("gas-api-url");
-      if(res && res.value) return res.value;
+      var v = localStorage.getItem("gas-api-url");
+      if(v) return v;
     }catch(e){}
     return "";
   }
   async function saveUrl(url){
-    try{ await window.storage.set("gas-api-url", url); }catch(e){}
+    try{ localStorage.setItem("gas-api-url", url); }catch(e){}
   }
 
   function setConnStatus(status, text){
