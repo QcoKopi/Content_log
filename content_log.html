@@ -752,6 +752,30 @@
   var METRIC_OPTIONS = ["Followers Baru","DM","Komentar","Likes","Share","Reach","Lainnya"];
 
   var JS_DAY_TO_INDO = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; // Date.getDay(): 0=Minggu
+
+  // Google Sheets kadang nyimpen tanggal/jam sebagai objek Date ASLI (bukan
+  // string bersih) tergantung format kolom -- GAS nge-serialize ini jadi
+  // string ISO timestamp aneh waktu dikirim ke frontend (mis. tanggal jadi
+  // "2026-08-17T17:00:00.000Z", jam-doang jadi "1899-12-30T09:52:48.000Z",
+  // 1899-12-30 itu "hari nol" Google Sheets buat sel bertipe jam-doang).
+  // Ini padanan frontend dari normDate_/normTime_ yang sudah ada di Code.gs
+  // -- pola SAMA, cuma sekarang diterapkan juga di sisi tampilan.
+  function normDateStr(val){
+    if(!val) return "";
+    if(/^\d{4}-\d{2}-\d{2}$/.test(val)) return val; // udah bersih, apa adanya
+    var d = new Date(val);
+    if(isNaN(d.getTime())) return "";
+    var pad = function(n){ return n<10 ? "0"+n : ""+n; };
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+  function normTimeStr(val){
+    if(!val) return "";
+    if(/^\d{2}:\d{2}$/.test(val)) return val; // udah bersih, apa adanya
+    var d = new Date(val);
+    if(isNaN(d.getTime())) return "";
+    var pad = function(n){ return n<10 ? "0"+n : ""+n; };
+    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
   var MIN_KPI_FOR_LIVE = 5; // ambang minimal entri KPI sebelum rekomendasi geser dari baseline ke data sendiri
 
   var API_URL = "";
@@ -1203,7 +1227,7 @@
       card.innerHTML =
         '<div class="review-card-head">' +
           '<div><div class="review-card-title">' + it.text + '</div>' +
-            '<div class="review-card-meta">' + (dest ? dest.name : it.dest_id) + ' &middot; ' + (it.post_date || "") + ' ' + (it.post_time || "") + ' &middot; ' + (it.format || stockItem ? (it.format || stockItem.type) : "") + '</div></div>' +
+            '<div class="review-card-meta">' + (dest ? dest.name : it.dest_id) + ' &middot; ' + normDateStr(it.post_date) + ' ' + normTimeStr(it.post_time) + ' &middot; ' + (it.format || stockItem ? (it.format || stockItem.type) : "") + '</div></div>' +
           '<span class="review-expiry ' + expiryClass + '">' + expiryText + '</span>' +
         '</div>' +
         (stockItem && stockItem.link ? '<div style="font-size:11.5px;"><a href="' + stockItem.link + '" target="_blank" rel="noopener">Buka media asli (' + stockItem.id + ') buat dicek dulu</a></div>' : '<div style="font-size:11.5px;color:var(--brick);">Stock/media nggak ketemu — hati-hati sebelum approve.</div>') +
@@ -1255,9 +1279,23 @@
   // terpisah sebagai "Terlewat", karena itu butuh perhatian.
   function renderUpcomingSchedule(){
     var content = document.getElementById("upcomingScheduleContent");
-    var todayStr = new Date().toISOString().slice(0, 10);
+    var todayStr = normDateStr(new Date());
 
-    var scheduled = state.checklist.filter(function(it){ return !!it.post_date; });
+    // Normalisasi post_date/post_time SEKALI di sini -- salinan view lokal,
+    // BUKAN ubah state.checklist asli -- biar semua logika filter/group/sort
+    // di bawah otomatis pakai nilai yang udah bersih, nggak perlu manggil
+    // normDateStr/normTimeStr berulang di tiap titik.
+    var scheduled = state.checklist
+      .filter(function(it){ return !!it.post_date; })
+      .map(function(it){
+        var copy = {};
+        for(var k in it) copy[k] = it[k];
+        copy.post_date = normDateStr(it.post_date);
+        copy.post_time = normTimeStr(it.post_time);
+        return copy;
+      })
+      .filter(function(it){ return !!it.post_date; }); // buang yang genuinely invalid setelah dinormalisasi
+
     var overdue = scheduled.filter(function(it){
       var isDone = it.done === true || it.done === "TRUE" || it.done === "true";
       return !isDone && it.post_date < todayStr;
@@ -1579,7 +1617,7 @@
     var wsStr = toYMD(weekStart), weStr = toYMD(weekEnd);
 
     var usedThisWeek = state.checklist.filter(function(it){
-      return it.dest_id === dest.id && it.post_date && it.post_date >= wsStr && it.post_date <= weStr && it.format;
+      return it.dest_id === dest.id && it.post_date && normDateStr(it.post_date) >= wsStr && normDateStr(it.post_date) <= weStr && it.format;
     });
     var usedCount = {};
     usedThisWeek.forEach(function(it){
@@ -1677,7 +1715,7 @@
 
     var byDay = {}, byFormat = {};
     posts.forEach(function(r){
-      var d = new Date(r.post_date + "T00:00:00");
+      var d = new Date(normDateStr(r.post_date) + "T00:00:00");
       var eng = engagementOf(r);
       if(!isNaN(d.getTime())){
         var dayName = JS_DAY_TO_INDO[d.getDay()];
@@ -2291,7 +2329,7 @@
     var byDay = {}, byFormat = {};
     posts.forEach(function(r){
       var eng = engagementOf(r);
-      var d = new Date(r.post_date + "T00:00:00");
+      var d = new Date(normDateStr(r.post_date) + "T00:00:00");
       if(!isNaN(d.getTime())){
         var dayName = JS_DAY_TO_INDO[d.getDay()];
         byDay[dayName] = byDay[dayName] || { sum:0, count:0 };
@@ -2356,7 +2394,7 @@
     if(mediaWithFollows.length > 0){
       var sortedByFollows = mediaWithFollows.slice().sort(function(a,b){ return parseFloat(b.follows_from_post) - parseFloat(a.follows_from_post); });
       var followRows = sortedByFollows.map(function(r, i){
-        return "<tr><td>" + (i===0 && parseFloat(r.follows_from_post)>0 ? "🏆 " : "") + (r.post_date||"—") + "</td>" +
+        return "<tr><td>" + (i===0 && parseFloat(r.follows_from_post)>0 ? "🏆 " : "") + (r.post_date ? normDateStr(r.post_date) : "—") + "</td>" +
           "<td style='max-width:220px;'>" + (r.caption_snippet||"—") + "</td>" +
           "<td>" + (IG_FORMAT_NAME_MAP[r.media_type]||r.media_type||"—") + "</td>" +
           "<td><b>" + r.follows_from_post + "</b></td></tr>";
@@ -2373,7 +2411,7 @@
     if(mediaRows.length){
       var postRows = mediaRows.map(function(r){
         var isAdChecked = (r.is_ad === true || r.is_ad === "TRUE" || r.is_ad === "true") ? "checked" : "";
-        return "<tr><td>" + (r.post_date || "—") + "</td>" +
+        return "<tr><td>" + (r.post_date ? normDateStr(r.post_date) : "—") + "</td>" +
           "<td style='max-width:180px;'>" + (r.caption_snippet || "—") + "</td>" +
           "<td>" + (r.likes || 0) + "</td><td>" + (r.comments || 0) + "</td><td>" + (r.saved || 0) + "</td>" +
           "<td>" + (r.shares || 0) + "</td><td>" + (r.reach || "—") + "</td><td>" + (r.views || "—") + "</td>" +
@@ -2444,7 +2482,7 @@
 
     if(postRows.length){
       var pRows = postRows.map(function(r){
-        return "<tr><td>" + (r.post_date || "—") + "</td>" +
+        return "<tr><td>" + (r.post_date ? normDateStr(r.post_date) : "—") + "</td>" +
           "<td style='max-width:220px;'>" + (r.message_snippet || "—") + "</td>" +
           "<td>" + (r.reactions || 0) + "</td><td>" + (r.comments || 0) + "</td><td>" + (r.shares || 0) + "</td>" +
           "<td>" + (r.reach || "—") + "</td><td>" + (r.engaged_users || "—") + "</td></tr>";
@@ -2607,7 +2645,7 @@
       var meta = document.createElement("div"); meta.className = "item-meta";
       var metaValues = [destName(it.dest_id), labelName(it.label_id)];
       if(it.format) metaValues.push(it.format);
-      if(it.post_date) metaValues.push(it.post_date + (it.post_time ? " " + it.post_time : ""));
+      if(it.post_date) metaValues.push(normDateStr(it.post_date) + (it.post_time ? " " + normTimeStr(it.post_time) : ""));
       metaValues.push(it.created);
       metaValues.forEach(function(v){
         var tag = document.createElement("span"); tag.className = "item-tag"; tag.textContent = v;
