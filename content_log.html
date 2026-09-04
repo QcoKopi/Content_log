@@ -477,7 +477,7 @@
           <li><b>Siapkan aset</b> — simpan ke folder Drive sesuai tipe, share "Anyone with link", ambil direct-link</li>
           <li><b>Catat di Stock</b> (tab Kelola) — nama konten, tipe, label, tempel direct-link. ID otomatis terbentuk</li>
           <li><b>Jadwalkan di Kalender</b> — pilih destinasi, dari dropdown "Pilih dari Stock" pilih aset — format &amp; caption otomatis terisi</li>
-          <li><b>Sistem menyiapkan otomatis</b> — tiap jam, cek checklist yang jamnya lewat, upload ke Instagram sebagai container (belum tayang)</li>
+          <li><b>Sistem menyiapkan otomatis</b> — tiap 2 jam, cek checklist yang jamnya lewat, upload ke Instagram sebagai container (belum tayang)</li>
           <li><b>Kamu review</b> — tab Kalender, bagian "Menunggu Persetujuan" — cek caption &amp; media asli</li>
           <li><b>Setujui</b> — klik "Setujui &amp; Tayangkan" → baru di titik ini benar-benar publish</li>
           <li><b>Tercatat otomatis</b> — hasil masuk ke Publish Log (Laporan Analisa)</li>
@@ -501,7 +501,7 @@
           <tbody>
             <tr><td>media_error di Publish Log</td><td>Cek ulang batasan ukuran/rasio di bagian 5</td></tr>
             <tr><td>Link Stock nggak jalan</td><td>Pastikan sharing "Anyone with the link", bukan "Restricted" — cek per file</td></tr>
-            <tr><td>Nggak muncul di "Menunggu Persetujuan"</td><td>Trigger jalan tiap 1 jam, belum tentu langsung; atau field Stock di checklist kosong</td></tr>
+            <tr><td>Nggak muncul di "Menunggu Persetujuan"</td><td>Trigger jalan tiap 2 jam, belum tentu langsung -- atau pakai tombol "Publish Sekarang" di tab Checklist buat cek instan; bisa juga field Stock di checklist kosong</td></tr>
             <tr><td>Token/insight tiba-tiba error</td><td>Token kadaluarsa 60 hari — cek setupTokenRefreshTrigger() sudah terpasang</td></tr>
           </tbody>
         </table>
@@ -2506,7 +2506,7 @@
   function renderDmActivity(){
     var content = document.getElementById("dmActivityContent");
     if(state.dmActivity.length === 0){
-      content.innerHTML = '<div class="cal-empty">Belum ada data. Jalankan syncDmActivity() dari editor Apps Script (pasang setupDmActivitySyncTrigger() dulu biar otomatis tiap 6 jam).</div>';
+      content.innerHTML = '<div class="cal-empty">Belum ada data. Jalankan syncDmActivity() dari editor Apps Script (pasang setupDmActivitySyncTrigger() dulu biar otomatis tiap 12 jam).</div>';
       return;
     }
 
@@ -2552,7 +2552,7 @@
   function renderPublishLog(){
     var content = document.getElementById("publishLogContent");
     if(state.publishLog.length === 0){
-      content.innerHTML = '<div class="cal-empty">Belum ada percobaan publish. Muncul otomatis begitu prepareScheduledContent() mulai jalan (lewat trigger tiap jam).</div>';
+      content.innerHTML = '<div class="cal-empty">Belum ada percobaan publish. Muncul otomatis begitu prepareScheduledContent() mulai jalan (lewat trigger tiap 2 jam, atau tombol "Publish Sekarang").</div>';
       return;
     }
     var sorted = state.publishLog.slice().sort(function(a,b){ return String(b.attempted_at).localeCompare(String(a.attempted_at)); });
